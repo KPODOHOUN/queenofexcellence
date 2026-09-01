@@ -1,0 +1,312 @@
+// Reconstructed schema.prisma — Queen of Excellence
+// Rebuilt from application code (API routes, lib/*, Server Components) after the
+// original prisma/ directory was lost. See task notes for low-confidence fields.
+//
+// NOTE: SQLite does not support native Prisma `enum` types, so all "enum-like"
+// fields (status, type, ...) are modeled as String and validated at the
+// application layer (zod schemas already do this throughout the codebase).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Auth / Admin
+// ---------------------------------------------------------------------------
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Events / Candidates
+// ---------------------------------------------------------------------------
+
+model Event {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  image        String?
+  banner       String?
+  description  String
+  shortDesc    String?
+  date         DateTime
+  time         String?
+  location     String
+  // "UPCOMING" | "ONGOING" | "COMPLETED" | "DRAFT"
+  status       String   @default("DRAFT")
+  rules        String?
+  presentation String?
+  votePrice    Int      @default(500)
+  published    Boolean  @default(false)
+  archived     Boolean  @default(false)
+  blocked      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  candidates   Candidate[]
+  votes        Vote[]
+  tickets      Ticket[]
+  ticketOrders TicketOrder[]
+  gallery      GalleryItem[]
+  payments     Payment[]
+}
+
+model Candidate {
+  id           String   @id @default(cuid())
+  eventId      String
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name         String
+  slug         String
+  number       Int
+  photo        String?
+  bio          String?
+  presentation String?
+  city         String?
+  country      String?
+  extraInfo    String?
+  // "PENDING" | "APPROVED" | "REJECTED"
+  status       String   @default("PENDING")
+  published    Boolean  @default(false)
+  voteCount    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  votes   Vote[]
+  gallery GalleryItem[]
+
+  @@unique([eventId, slug])
+  @@index([eventId])
+}
+
+// ---------------------------------------------------------------------------
+// Voting / Payments / Ticketing
+// ---------------------------------------------------------------------------
+
+model Vote {
+  id          String   @id @default(cuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  paymentId   String    @unique
+  payment     Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  voteCount   Int
+  amount      Int
+  // "PENDING" | "PAID" | "FAILED" | "CANCELLED"
+  status      String   @default("PENDING")
+  voterName   String
+  voterEmail  String
+  voterPhone  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([eventId])
+  @@index([candidateId])
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  reference     String   @unique
+  fispayRef     String?
+  amount        Int
+  // "VOTE" | "TICKET"
+  type          String
+  // "PENDING" | "PAID" | "FAILED" | "CANCELLED"
+  status        String   @default("PENDING")
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
+  eventId       String?
+  event         Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  metadata      String?
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  vote        Vote?
+  ticketOrder TicketOrder?
+
+  @@index([eventId])
+}
+
+model Ticket {
+  id          String   @id @default(cuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  price       Int
+  quantity    Int
+  sold        Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderItems TicketOrderItem[]
+
+  @@index([eventId])
+}
+
+model TicketOrder {
+  id            String   @id @default(cuid())
+  reference     String   @unique
+  eventId       String
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  paymentId     String   @unique
+  payment       Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  customerName  String
+  customerEmail String
+  customerPhone String?
+  totalAmount   Int
+  // "PENDING" | "PAID" | "FAILED" | "CANCELLED" | "VALIDATED"
+  status        String   @default("PENDING")
+  qrCode        String?
+  validatedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items TicketOrderItem[]
+
+  @@index([eventId])
+}
+
+model TicketOrderItem {
+  id            String @id @default(cuid())
+  ticketOrderId String
+  ticketOrder   TicketOrder @relation(fields: [ticketOrderId], references: [id], onDelete: Cascade)
+  ticketId      String
+  ticket        Ticket      @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+  quantity      Int
+  unitPrice     Int
+  subtotal      Int
+
+  @@index([ticketOrderId])
+  @@index([ticketId])
+}
+
+// ---------------------------------------------------------------------------
+// Content / Site
+// ---------------------------------------------------------------------------
+
+model GalleryItem {
+  id          String   @id @default(cuid())
+  title       String?
+  imageUrl    String
+  videoUrl    String?
+  category    String?
+  // "IMAGE" | "VIDEO"
+  type        String   @default("IMAGE")
+  eventId     String?
+  event       Event?     @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  candidateId String?
+  candidate   Candidate? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+  published   Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([eventId])
+  @@index([candidateId])
+}
+
+model Impact {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  icon        String?
+  value       String?
+  image       String?
+  published   Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Partner {
+  id          String   @id @default(cuid())
+  name        String
+  logo        String
+  website     String?
+  description String?
+  published   Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String
+  image       String?
+  content     String?
+  published   Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model FAQ {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  published Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model SiteContent {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model HeroSlide {
+  id                String   @id @default(cuid())
+  image             String
+  subtitle          String?
+  title             String
+  description       String?
+  ctaPrimaryLabel   String?
+  ctaPrimaryHref    String?
+  ctaSecondaryLabel String?
+  ctaSecondaryHref  String?
+  published         Boolean  @default(false)
+  order             Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}

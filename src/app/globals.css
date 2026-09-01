@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #141414;
+  --gold: #F4D03F;
+  --gold-light: #F9E79F;
+  --gold-dark: #C9A227;
+  --champagne: #FEFCF5;
+  --champagne-dark: #FBF5E6;
+  --muted: #737373;
+  --border: #F0EBE0;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-gold-dark: var(--gold-dark);
+  --color-champagne: var(--champagne);
+  --color-champagne-dark: var(--champagne-dark);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-inter);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-playfair), Georgia, serif;
+}
+
+::selection {
+  background: var(--gold-light);
+  color: var(--foreground);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes gold-glow {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #F9E79F 0%, #F4D03F 45%, #C9A227 100%);
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.card-elevated {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(244, 208, 63, 0.04);
+  transition: box-shadow 0.4s ease, transform 0.4s ease, border-color 0.4s ease;
+}
+
+.card-elevated:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 12px 40px rgba(244, 208, 63, 0.12);
+  border-color: rgba(244, 208, 63, 0.35);
+  transform: translateY(-2px);
+}
+
+.section-pattern {
+  background-image: radial-gradient(circle at 1px 1px, rgba(244, 208, 63, 0.06) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.hero-gold-blur {
+  background: radial-gradient(circle, rgba(244, 208, 63, 0.35) 0%, rgba(244, 208, 63, 0.08) 40%, transparent 70%);
+  filter: blur(80px);
+}
+
+/* Hide Next/Turbopack dev overlay / bottom-left 'N' indicator when present */
+/* These selectors cover common variants; using !important to override injected styles in dev. */
+#__next_dev_build_indicator,
+#__next-dev-overlay,
+.next-dev-overlay,
+#__next-build-indicator,
+[data-nextjs-dev-overlay],
+[data-nextjs-dialog],
+button[aria-label="Next.js"],
+[title="Open Next.js diagnostics"],
+[aria-label="Open Next.js diagnostics"] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Fallback: hide small fixed circular buttons in the bottom-left corner (very specific) */
+body > *[style*="position:fixed"][style*="left"][style*="bottom"] {
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  display: none !important;
+}
