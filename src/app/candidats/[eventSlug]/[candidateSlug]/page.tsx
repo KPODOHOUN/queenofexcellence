@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
+
+export const dynamic = "force-dynamic";
+
+
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ShareProfileButton } from "@/components/candidates/ShareProfileButton";

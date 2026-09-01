@@ -49,6 +49,7 @@ export default function VoteForm() {
 
   useEffect(() => {
     if (!selectedEvent) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCandidates([]);
       return;
     }

@@ -15,10 +15,6 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
-  // Disable the bottom-left build/activity indicator in dev
-  devIndicators: {
-    buildActivity: false,
-  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },

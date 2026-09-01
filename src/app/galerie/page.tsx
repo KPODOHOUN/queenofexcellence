@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import Image from "next/image";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
+
 export const metadata: Metadata = {
   title: "Galerie",
   description: "Moments d'excellence capturés lors de nos événements.",

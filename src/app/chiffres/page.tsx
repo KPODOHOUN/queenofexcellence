@@ -3,6 +3,8 @@ import { Reveal } from "@/components/ui/Reveal";
 import { getSiteStats } from "@/lib/data";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Chiffres clés",
   description: "Les statistiques de Queen of Excellence.",

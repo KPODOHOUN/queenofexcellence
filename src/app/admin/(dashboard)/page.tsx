@@ -1,6 +1,8 @@
 import { getAdminStats } from "@/lib/data";
 import { formatCurrency } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminDashboard() {
   const stats = await getAdminStats();
 

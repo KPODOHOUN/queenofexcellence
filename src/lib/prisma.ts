@@ -4,18 +4,20 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-function getDatabaseUrl(): string {
-  const base = process.env.DATABASE_URL || "file:./dev.db";
-  if (base.includes("busy_timeout=")) return base;
-  const separator = base.includes("?") ? "&" : "?";
-  return `${base}${separator}busy_timeout=30000&connection_limit=1`;
+function createPrismaClient(): PrismaClient {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error(
+      "DATABASE_URL is not set. Define it in .env.local or in your hosting dashboard."
+    );
+  }
+
+  return new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+  });
 }
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-    datasources: { db: { url: getDatabaseUrl() } },
-  });
+export const prisma: PrismaClient =
+  globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;

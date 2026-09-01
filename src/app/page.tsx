@@ -12,6 +12,8 @@ import { getSiteContent, getSiteStats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [heroSlides, about, events, stats, impacts, gallery, faqs, partners] = await Promise.all([
     prisma.heroSlide.findMany({

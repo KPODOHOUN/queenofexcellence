@@ -5,6 +5,8 @@ import { getSiteContent } from "@/lib/data";
 import { Mail } from "lucide-react";
 import ContactForm from "./ContactForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function ContactPage() {
   const [socialLinks, contact] = await Promise.all([
     getSocialLinks(),

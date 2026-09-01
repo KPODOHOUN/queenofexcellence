@@ -4,6 +4,8 @@ import { Reveal } from "@/components/ui/Reveal";
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "FAQ",
   description: "Questions fréquentes sur Queen of Excellence.",

@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Événements",
   description: "Découvrez tous les événements et concours Queen of Excellence.",

@@ -44,6 +44,7 @@ export function Header({ transparent = false }: HeaderProps) {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileOpen(false);
     setMoreOpen(false);
   }, [pathname]);
