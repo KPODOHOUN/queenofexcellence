@@ -1,4 +1,10 @@
+---
 deployment:
   tasks:
     - export DEPLOYPATH=/home/c2852916c/public_html/
     - /bin/cp -R * $DEPLOYPATH
+    - /bin/cp -R .cpanel.yml .gitignore .env.example $DEPLOYPATH 2>/dev/null || true
+    - /usr/bin/cd $DEPLOYPATH && /usr/local/bin/npm install --omit=dev 2>&1 || /usr/bin/cd $DEPLOYPATH && /usr/bin/npm install --omit=dev 2>&1
+    - /usr/bin/cd $DEPLOYPATH && /usr/local/bin/npx prisma generate 2>&1 || /usr/bin/cd $DEPLOYPATH && /usr/bin/npx prisma generate 2>&1
+    - /usr/bin/cd $DEPLOYPATH && /usr/local/bin/npx prisma migrate deploy 2>&1 || /usr/bin/cd $DEPLOYPATH && /usr/bin/npx prisma migrate deploy 2>&1
+    - /usr/bin/cd $DEPLOYPATH && /usr/local/bin/npm run build 2>&1 || /usr/bin/cd $DEPLOYPATH && /usr/bin/npm run build 2>&1
