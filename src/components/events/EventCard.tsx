@@ -23,7 +23,7 @@ export function EventCard({ event, className }: EventCardProps) {
   const candidateCount = event._count?.candidates ?? 0;
 
   return (
-    <Link href={`/events/${event.slug}`} className={cn("group card-elevated overflow-hidden block", className)}>
+    <Link href={`/events/${event.slug}`} className={cn("group card-elevated gold-ring overflow-hidden block", className)}>
       <div className="relative aspect-[16/10] overflow-hidden bg-champagne-dark">
         {event.image ? (
           <Image
@@ -31,15 +31,15 @@ export function EventCard({ event, className }: EventCardProps) {
             alt={event.name}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover group-hover:scale-[1.04] transition-transform duration-700 ease-out"
+            className="object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-7xl font-serif text-gold/15">Q</span>
+            <span className="text-7xl font-serif text-gold/15 group-hover:scale-110 transition-transform duration-500">Q</span>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
-        <span className="absolute top-4 left-4 px-3 py-1.5 text-[11px] font-medium tracking-wide uppercase bg-white/95 backdrop-blur-sm rounded-full text-foreground shadow-sm">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-70 group-hover:opacity-90 transition-opacity duration-500" />
+        <span className="absolute top-4 left-4 px-3 py-1.5 text-[11px] font-medium tracking-wide uppercase bg-white/95 backdrop-blur-sm rounded-full text-foreground shadow-sm transition-transform duration-300 group-hover:scale-105">
           {getEventStatusLabel(event.status)}
         </span>
       </div>

@@ -8,9 +8,10 @@ interface RevealProps {
   className?: string;
   delay?: number;
   as?: "div" | "section";
+  blur?: boolean;
 }
 
-export function Reveal({ children, className, delay = 0, as = "div" }: RevealProps) {
+export function Reveal({ children, className, delay = 0, as = "div", blur = false }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -24,7 +25,7 @@ export function Reveal({ children, className, delay = 0, as = "div" }: RevealPro
           observer.disconnect();
         }
       },
-      { threshold: 0.15, rootMargin: "0px 0px -80px 0px" }
+      { threshold: 0.12, rootMargin: "0px 0px -60px 0px" }
     );
     observer.observe(node);
     return () => observer.disconnect();
@@ -37,8 +38,10 @@ export function Reveal({ children, className, delay = 0, as = "div" }: RevealPro
       ref={ref as never}
       style={{ transitionDelay: visible ? `${delay}ms` : "0ms" }}
       className={cn(
-        "transition-all duration-700 ease-out",
-        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8",
+        "transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform]",
+        visible
+          ? "opacity-100 translate-y-0 blur-0"
+          : cn("opacity-0 translate-y-10", blur && "blur-sm"),
         className
       )}
     >

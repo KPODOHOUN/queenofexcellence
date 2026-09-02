@@ -1,5 +1,6 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-db";
 import { formatCurrency } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
@@ -35,18 +36,23 @@ export default async function CandidateProfilePage({
 }) {
   const { eventSlug, candidateSlug } = await params;
 
-  const candidate = await prisma.candidate.findFirst({
-    where: {
-      slug: candidateSlug,
-      published: true,
-      status: "APPROVED",
-      event: { slug: eventSlug, published: true },
-    },
-    include: {
-      event: true,
-      gallery: { where: { published: true }, orderBy: { order: "asc" } },
-    },
-  });
+  const candidate = await safeQuery(
+    "candidates.profile",
+    () =>
+      prisma.candidate.findFirst({
+        where: {
+          slug: candidateSlug,
+          published: true,
+          status: "APPROVED",
+          event: { slug: eventSlug, published: true },
+        },
+        include: {
+          event: true,
+          gallery: { where: { published: true }, orderBy: { order: "asc" } },
+        },
+      }),
+    null
+  );
 
   if (!candidate) notFound();
 

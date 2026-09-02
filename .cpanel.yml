@@ -7,4 +7,4 @@ deployment:
     - /bin/bash -c "cd $DEPLOYPATH && npm install --omit=dev"
     - /bin/bash -c "cd $DEPLOYPATH && npx prisma generate"
     - /bin/bash -c "cd $DEPLOYPATH && npx prisma migrate deploy"
-    - /bin/bash -c "cd $DEPLOYPATH && npm run build"
+    - /bin/bash -c "cd $DEPLOYPATH && NODE_ENV=production npm run build"

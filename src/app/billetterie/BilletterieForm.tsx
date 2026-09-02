@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { FormPageShell } from "@/components/ui/FormPageShell";
+import { FormInput, FormSelect } from "@/components/ui/FormField";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Reveal } from "@/components/ui/Reveal";
 import { formatCurrency } from "@/lib/utils";
+import { Calendar, Ticket, User, Mail, Phone, Minus, Plus } from "lucide-react";
 
 interface Event {
   id: string;
@@ -105,115 +109,140 @@ export default function BilletterieForm() {
   }
 
   return (
-    <>
-      <section className="py-20 lg:py-24 bg-champagne animate-fade-in">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex items-center justify-center gap-3 mb-5">
-            <span className="h-px w-8 bg-gold/60" />
-            <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium">Billetterie</p>
-            <span className="h-px w-8 bg-gold/60" />
-          </div>
-          <h1 className="font-serif text-4xl sm:text-5xl text-foreground leading-tight tracking-tight">Réservez votre place</h1>
-        </div>
-      </section>
-
-      <section className="py-4 lg:py-8 pb-20 bg-white">
-        <div className="max-w-2xl mx-auto px-4">
-          <form onSubmit={handleSubmit} className="space-y-8 animate-fade-in [animation-delay:100ms] [animation-fill-mode:backwards]">
-            <div>
-              <label className="block text-sm font-medium mb-2">Événement</label>
-              <select
+    <FormPageShell
+      eyebrow="Billetterie"
+      title="Réservez votre place"
+      description="Assistez à la grande finale et vivez l'excellence en direct."
+      dark
+    >
+      {events.length === 0 ? (
+        <Reveal>
+          <EmptyState
+            title="Aucun événement disponible à la billetterie."
+            description="Les places seront bientôt en vente. Restez connectés."
+            action={{ label: "Nous contacter", href: "/contact" }}
+          />
+        </Reveal>
+      ) : (
+        <Reveal className="max-w-2xl mx-auto">
+          <div className="card-elevated gold-ring p-8 lg:p-10">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <FormSelect
+                label="Événement"
+                icon={<Calendar size={18} />}
                 value={selectedEvent}
                 onChange={(e) => setSelectedEvent(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-gold/30"
               >
                 <option value="">Sélectionnez un événement</option>
                 {events.map((ev) => (
                   <option key={ev.id} value={ev.id}>{ev.name}</option>
                 ))}
-              </select>
-            </div>
+              </FormSelect>
 
-            {selectedEvent && tickets.length === 0 && (
-              <EmptyState title="Aucun billet disponible pour cet événement." />
-            )}
+              {selectedEvent && tickets.length === 0 && (
+                <EmptyState title="Aucun billet disponible pour cet événement." />
+              )}
 
-            {tickets.map((ticket) => {
-              const available = ticket.quantity - ticket.sold;
-              return (
-                <div key={ticket.id} className="p-6 border border-border rounded-2xl transition-all duration-300 hover:border-gold/30 hover:shadow-md hover:shadow-gold/5">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="font-serif text-lg">{ticket.name}</h3>
-                      {ticket.description && (
-                        <p className="text-sm text-muted mt-1">{ticket.description}</p>
-                      )}
+              {tickets.map((ticket) => {
+                const available = ticket.quantity - ticket.sold;
+                const qty = quantities[ticket.id] || 0;
+                return (
+                  <div
+                    key={ticket.id}
+                    className="p-6 rounded-2xl border border-border gold-ring transition-all duration-300 hover:border-gold/35"
+                  >
+                    <div className="flex justify-between items-start gap-4 mb-5">
+                      <div className="flex gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0">
+                          <Ticket size={18} className="text-gold" />
+                        </div>
+                        <div>
+                          <h3 className="font-serif text-lg text-foreground">{ticket.name}</h3>
+                          {ticket.description && (
+                            <p className="text-sm text-muted mt-1">{ticket.description}</p>
+                          )}
+                          <p className="text-xs text-muted mt-2">{available} places restantes</p>
+                        </div>
+                      </div>
+                      <p className="font-serif text-xl text-gold shrink-0">{formatCurrency(ticket.price)}</p>
                     </div>
-                    <p className="font-serif text-xl text-gold">{formatCurrency(ticket.price)}</p>
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setQuantities({ ...quantities, [ticket.id]: Math.max(0, qty - 1) })
+                        }
+                        className="w-9 h-9 rounded-full border border-border flex items-center justify-center hover:border-gold/40 hover:bg-champagne transition-colors"
+                        aria-label="Diminuer"
+                      >
+                        <Minus size={16} />
+                      </button>
+                      <span className="w-8 text-center font-medium tabular-nums">{qty}</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setQuantities({
+                            ...quantities,
+                            [ticket.id]: Math.min(10, available, qty + 1),
+                          })
+                        }
+                        className="w-9 h-9 rounded-full border border-border flex items-center justify-center hover:border-gold/40 hover:bg-champagne transition-colors"
+                        aria-label="Augmenter"
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted">{available} places restantes</span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={Math.min(10, available)}
-                      value={quantities[ticket.id] || 0}
-                      onChange={(e) =>
-                        setQuantities({ ...quantities, [ticket.id]: parseInt(e.target.value) || 0 })
-                      }
-                      className="w-20 px-3 py-2 border border-border rounded-lg text-center"
+                );
+              })}
+
+              {total > 0 && (
+                <>
+                  <div className="p-5 rounded-2xl bg-[#0c0c0c] text-center gold-ring">
+                    <p className="text-xs text-white/50 tracking-wider uppercase mb-1">Total</p>
+                    <p className="font-serif text-4xl gold-gradient-text">{formatCurrency(total)}</p>
+                  </div>
+
+                  <div className="space-y-5">
+                    <FormInput
+                      label="Votre nom"
+                      icon={<User size={18} />}
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      required
+                    />
+                    <FormInput
+                      label="Email"
+                      type="email"
+                      icon={<Mail size={18} />}
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      required
+                    />
+                    <FormInput
+                      label="Téléphone"
+                      type="tel"
+                      icon={<Phone size={18} />}
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      hint="Optionnel"
                     />
                   </div>
-                </div>
-              );
-            })}
 
-            {total > 0 && (
-              <>
-                <div className="p-4 bg-champagne rounded-xl text-center">
-                  <p className="text-sm text-muted">Total</p>
-                  <p className="font-serif text-3xl text-gold">{formatCurrency(total)}</p>
-                </div>
+                  {error && (
+                    <p className="text-sm text-red-700 bg-red-50 border border-red-100 p-4 rounded-xl">{error}</p>
+                  )}
 
-                <div className="space-y-4">
-                  <input
-                    type="text"
-                    placeholder="Votre nom"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 border border-border rounded-xl"
-                  />
-                  <input
-                    type="email"
-                    placeholder="Email"
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 border border-border rounded-xl"
-                  />
-                  <input
-                    type="tel"
-                    placeholder="Téléphone (optionnel)"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    className="w-full px-4 py-3 border border-border rounded-xl"
-                  />
-                </div>
-
-                {error && (
-                  <p className="text-sm text-red-600 bg-red-50 p-3 rounded-xl">{error}</p>
-                )}
-
-                <Button type="submit" disabled={loading} className="w-full" size="lg">
-                  {loading ? "Traitement..." : `Payer ${formatCurrency(total)}`}
-                </Button>
-              </>
-            )}
-          </form>
-        </div>
-      </section>
-    </>
+                  <Button type="submit" disabled={loading} className="w-full btn-shimmer" size="lg">
+                    {loading ? "Traitement..." : `Payer ${formatCurrency(total)}`}
+                  </Button>
+                </>
+              )}
+            </form>
+          </div>
+        </Reveal>
+      )}
+    </FormPageShell>
   );
 }

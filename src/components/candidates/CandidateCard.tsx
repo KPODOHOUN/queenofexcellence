@@ -21,7 +21,7 @@ interface CandidateCardProps {
 
 export function CandidateCard({ candidate, className }: CandidateCardProps) {
   return (
-    <article className={cn("group relative card-elevated overflow-hidden", className)}>
+    <article className={cn("group relative card-elevated gold-ring overflow-hidden", className)}>
       <Link
         href={`/candidats/${candidate.event.slug}/${candidate.slug}`}
         className="absolute inset-0 z-0"

@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Reveal } from "@/components/ui/Reveal";
 
 interface PageHeroProps {
   eyebrow?: string;
@@ -12,9 +13,10 @@ export function PageHero({ eyebrow, title, description, className, children }: P
   return (
     <section className={cn("relative py-20 lg:py-28 bg-champagne overflow-hidden", className)}>
       <div className="absolute inset-0 section-pattern opacity-60" />
-      <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-gold/10 blur-[80px] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-gold/10 blur-[80px] pointer-events-none animate-float" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-gold/5 blur-[60px] pointer-events-none" />
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <Reveal blur className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         {eyebrow && (
           <div className="flex items-center justify-center gap-3 mb-4">
             <span className="h-px w-8 bg-gold/60" />
@@ -29,7 +31,7 @@ export function PageHero({ eyebrow, title, description, className, children }: P
           <p className="mt-5 text-muted text-[15px] leading-relaxed max-w-xl mx-auto">{description}</p>
         )}
         {children && <div className="mt-8">{children}</div>}
-      </div>
+      </Reveal>
     </section>
   );
 }

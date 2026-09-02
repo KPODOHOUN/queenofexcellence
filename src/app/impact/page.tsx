@@ -1,7 +1,9 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-db";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -12,26 +14,23 @@ export const metadata: Metadata = {
 };
 
 export default async function ImpactPage() {
-  const impacts = await prisma.impact.findMany({
-    where: { published: true },
-    orderBy: { order: "asc" },
-  });
+  const impacts = await safeQuery(
+    "impact.list",
+    () =>
+      prisma.impact.findMany({
+        where: { published: true },
+        orderBy: { order: "asc" },
+      }),
+    []
+  );
 
   return (
     <PublicLayout>
-      <section className="py-20 lg:py-28 bg-champagne">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <div className="flex items-center gap-3 mb-5">
-              <span className="h-px w-8 bg-gold/60" />
-              <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium">Impact</p>
-            </div>
-            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-foreground leading-tight tracking-tight max-w-2xl">
-              Notre impact
-            </h1>
-          </Reveal>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Impact"
+        title="Notre impact"
+        description="Des actions concrètes pour accompagner et inspirer les femmes d'exception."
+      />
 
       <section className="py-4 lg:py-8 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

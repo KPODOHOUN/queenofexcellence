@@ -56,6 +56,16 @@ h1, h2, h3, h4, h5, h6 {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in-blur {
+  from { opacity: 0; transform: translateY(20px); filter: blur(8px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
 @keyframes shimmer {
   0% { background-position: -200% center; }
   100% { background-position: 200% center; }
@@ -66,8 +76,82 @@ h1, h2, h3, h4, h5, h6 {
   50% { opacity: 0.7; transform: scale(1.05); }
 }
 
+@keyframes ken-burns {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes bounce-soft {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(6px); opacity: 1; }
+}
+
+@keyframes slide-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
 .animate-fade-in {
   animation: fade-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-fade-in-blur {
+  animation: fade-in-blur 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-ken-burns {
+  animation: ken-burns 8s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-bounce-soft {
+  animation: bounce-soft 2s ease-in-out infinite;
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+.stagger-1 { animation-delay: 0.1s; opacity: 0; }
+.stagger-2 { animation-delay: 0.2s; opacity: 0; }
+.stagger-3 { animation-delay: 0.35s; opacity: 0; }
+.stagger-4 { animation-delay: 0.5s; opacity: 0; }
+.stagger-5 { animation-delay: 0.65s; opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-ken-burns {
+    animation: none;
+    transform: scale(1.02);
+  }
 }
 
 .gold-gradient {
@@ -92,6 +176,89 @@ h1, h2, h3, h4, h5, h6 {
 .card-elevated:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 12px 40px rgba(244, 208, 63, 0.12);
   border-color: rgba(244, 208, 63, 0.35);
+  transform: translateY(-4px);
+}
+
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.glass-dark {
+  background: rgba(12, 12, 12, 0.72);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+}
+
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(244, 208, 63, 0.5), transparent);
+}
+
+.gold-ring {
+  box-shadow: 0 0 0 1px rgba(244, 208, 63, 0.15), 0 0 40px rgba(244, 208, 63, 0.08);
+}
+
+.input-field {
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  background: white;
+  color: var(--foreground);
+  font-size: 0.9375rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+}
+
+.input-field::placeholder {
+  color: rgba(115, 115, 115, 0.7);
+}
+
+.input-field:hover {
+  border-color: rgba(244, 208, 63, 0.35);
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: rgba(244, 208, 63, 0.6);
+  box-shadow: 0 0 0 3px rgba(244, 208, 63, 0.15);
+}
+
+.input-field:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.contact-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(244, 208, 63, 0.12);
+  border-radius: 1.25rem;
+  transition: border-color 0.35s ease, background 0.35s ease, transform 0.35s ease;
+}
+
+.contact-card:hover {
+  border-color: rgba(244, 208, 63, 0.3);
+  background: rgba(244, 208, 63, 0.06);
   transform: translateY(-2px);
 }
 

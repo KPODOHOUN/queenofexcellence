@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-db";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -30,11 +31,16 @@ export default async function EventsPage({
           ? { status: "COMPLETED" as const }
           : {};
 
-  const events = await prisma.event.findMany({
-    where: { published: true, archived: false, ...statusFilter },
-    orderBy: { date: "desc" },
-    include: { _count: { select: { candidates: true } } },
-  });
+  const events = await safeQuery(
+    "events.list",
+    () =>
+      prisma.event.findMany({
+        where: { published: true, archived: false, ...statusFilter },
+        orderBy: { date: "desc" },
+        include: { _count: { select: { candidates: true } } },
+      }),
+    []
+  );
 
   const filters = [
     { label: "Tous", value: "" },
@@ -70,7 +76,10 @@ export default async function EventsPage({
             ))}
           </Reveal>
           {events.length === 0 ? (
-            <EmptyState title="Aucun événement disponible pour le moment." />
+            <EmptyState
+              title="Aucun événement disponible pour le moment."
+              action={{ label: "Nous contacter", href: "/contact" }}
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
               {events.map((event, i) => (

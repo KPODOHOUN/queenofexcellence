@@ -7,48 +7,85 @@ import { EventCard } from "@/components/events/EventCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Reveal } from "@/components/ui/Reveal";
-import { prisma } from "@/lib/prisma";
+import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { getSiteContent, getSiteStats } from "@/lib/data";
+import { fallbackAbout, fallbackHeroSlides } from "@/lib/home-fallback";
 import { cn } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
+async function loadHomePageData() {
+  if (!isDatabaseConfigured()) {
+    return {
+      heroSlides: [] as Awaited<ReturnType<typeof prisma.heroSlide.findMany>>,
+      about: fallbackAbout,
+      events: [] as Awaited<ReturnType<typeof prisma.event.findMany>>,
+      stats: await getSiteStats(),
+      impacts: [] as Awaited<ReturnType<typeof prisma.impact.findMany>>,
+      gallery: [] as Awaited<ReturnType<typeof prisma.galleryItem.findMany>>,
+      faqs: [] as Awaited<ReturnType<typeof prisma.fAQ.findMany>>,
+      partners: [] as Awaited<ReturnType<typeof prisma.partner.findMany>>,
+    };
+  }
+
+  try {
+    const [heroSlides, about, events, stats, impacts, gallery, faqs, partners] =
+      await Promise.all([
+        prisma.heroSlide.findMany({
+          where: { published: true },
+          orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+          take: 4,
+        }),
+        getSiteContent("about"),
+        prisma.event.findMany({
+          where: { published: true, archived: false },
+          orderBy: { date: "asc" },
+          take: 6,
+          include: { _count: { select: { candidates: true } } },
+        }),
+        getSiteStats(),
+        prisma.impact.findMany({
+          where: { published: true },
+          orderBy: { order: "asc" },
+          take: 4,
+        }),
+        prisma.galleryItem.findMany({
+          where: { published: true },
+          orderBy: { order: "asc" },
+          take: 6,
+        }),
+        prisma.fAQ.findMany({
+          where: { published: true },
+          orderBy: { order: "asc" },
+          take: 4,
+        }),
+        prisma.partner.findMany({
+          where: { published: true },
+          orderBy: { order: "asc" },
+        }),
+      ]);
+
+    return { heroSlides, about, events, stats, impacts, gallery, faqs, partners };
+  } catch (error) {
+    console.error("HomePage:", error);
+    return {
+      heroSlides: [] as Awaited<ReturnType<typeof prisma.heroSlide.findMany>>,
+      about: fallbackAbout,
+      events: [] as Awaited<ReturnType<typeof prisma.event.findMany>>,
+      stats: await getSiteStats(),
+      impacts: [] as Awaited<ReturnType<typeof prisma.impact.findMany>>,
+      gallery: [] as Awaited<ReturnType<typeof prisma.galleryItem.findMany>>,
+      faqs: [] as Awaited<ReturnType<typeof prisma.fAQ.findMany>>,
+      partners: [] as Awaited<ReturnType<typeof prisma.partner.findMany>>,
+    };
+  }
+}
+
 export default async function HomePage() {
-  const [heroSlides, about, events, stats, impacts, gallery, faqs, partners] = await Promise.all([
-    prisma.heroSlide.findMany({
-      where: { published: true },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      take: 4,
-    }),
-    getSiteContent("about"),
-    prisma.event.findMany({
-      where: { published: true, archived: false },
-      orderBy: { date: "asc" },
-      take: 6,
-      include: { _count: { select: { candidates: true } } },
-    }),
-    getSiteStats(),
-    prisma.impact.findMany({
-      where: { published: true },
-      orderBy: { order: "asc" },
-      take: 4,
-    }),
-    prisma.galleryItem.findMany({
-      where: { published: true },
-      orderBy: { order: "asc" },
-      take: 6,
-    }),
-    prisma.fAQ.findMany({
-      where: { published: true },
-      orderBy: { order: "asc" },
-      take: 4,
-    }),
-    prisma.partner.findMany({
-      where: { published: true },
-      orderBy: { order: "asc" },
-    }),
-  ]);
+  const { heroSlides, about, events, stats, impacts, gallery, faqs, partners } =
+    await loadHomePageData();
 
   const aboutData = about as {
     title?: string;
@@ -71,16 +108,8 @@ export default async function HomePage() {
         : undefined,
   }));
 
-  if (slides.length === 0 && gallery.length > 0) {
-    slides.push({
-      id: "fallback",
-      image: gallery[0].imageUrl,
-      subtitle: "Queen of Excellence",
-      title: "Célébrez l'Excellence",
-      description: "La plateforme événementielle qui met en lumière les femmes d'exception.",
-      ctaPrimary: { label: "Voter maintenant", href: "/vote" },
-      ctaSecondary: { label: "Découvrir", href: "/events" },
-    });
+  if (slides.length === 0) {
+    slides.push(...fallbackHeroSlides);
   }
 
   return (
@@ -89,9 +118,11 @@ export default async function HomePage() {
 
       {/* À propos */}
       {aboutData?.content && (
-        <section className="py-16 lg:py-20 bg-white">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <Reveal>
+        <section className="relative py-16 lg:py-24 bg-white overflow-hidden">
+          <div className="absolute inset-0 section-pattern opacity-40 pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-gold/5 blur-[100px] pointer-events-none" />
+          <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <Reveal blur>
               <div className="flex items-center justify-center gap-3 mb-5">
                 <span className="h-px w-8 bg-gold/60" />
                 <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium">Le concours</p>
@@ -118,8 +149,9 @@ export default async function HomePage() {
       <PartnersSection partners={partners} />
 
       {/* Events */}
-      <section id="evenements" className="py-16 lg:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="evenements" className="relative py-16 lg:py-24 bg-champagne/50 overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 section-divider" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-14">
             <div>
               <div className="flex items-center gap-3 mb-4">
@@ -156,7 +188,9 @@ export default async function HomePage() {
 
       {/* Stats */}
       <section className="py-20 lg:py-28 bg-[#0c0c0c] relative overflow-hidden">
+        <div className="absolute inset-0 section-pattern opacity-[0.04] pointer-events-none" />
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-gold/5 blur-[120px] pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 divide-y divide-white/10 lg:divide-y-0 lg:divide-x">
             {[
@@ -165,9 +199,9 @@ export default async function HomePage() {
               { label: "Votes", value: stats.votes },
               { label: "Supporters", value: stats.supporters },
             ].map((stat, i) => (
-              <Reveal key={stat.label} delay={i * 100} className="text-center py-6 lg:py-0 lg:px-8">
-                <p className="font-serif text-4xl lg:text-6xl gold-gradient-text mb-2">
-                  {stat.value.toLocaleString("fr-FR")}
+              <Reveal key={stat.label} delay={i * 120} className="text-center py-8 lg:py-0 lg:px-8 group">
+                <p className="font-serif text-4xl lg:text-6xl gold-gradient-text mb-2 transition-transform duration-500 group-hover:scale-105">
+                  <AnimatedCounter value={stat.value} />
                 </p>
                 <p className="text-[13px] text-white/50 tracking-[0.2em] uppercase">{stat.label}</p>
               </Reveal>
@@ -306,12 +340,12 @@ export default async function HomePage() {
       )}
 
       {/* CTA — transition vers le footer */}
-      <section className="relative py-20 lg:py-24 overflow-hidden">
+      <section className="relative py-20 lg:py-28 overflow-hidden">
         <div className="absolute inset-0 bg-[#080808]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_80%_at_50%_100%,rgba(244,208,63,0.12),transparent)]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full bg-gold/5 blur-[120px] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_80%_at_50%_100%,rgba(244,208,63,0.15),transparent)]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full bg-gold/5 blur-[120px] pointer-events-none animate-[gold-glow_6s_ease-in-out_infinite]" />
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
-        <div className="relative max-w-3xl mx-auto px-4 text-center">
+        <Reveal blur className="relative max-w-3xl mx-auto px-4 text-center">
           <p className="text-[11px] tracking-[0.35em] uppercase text-gold mb-5">Contact</p>
           <h2 className="font-serif text-4xl lg:text-5xl text-white mb-5 leading-tight">
             Restons en contact
@@ -321,12 +355,12 @@ export default async function HomePage() {
           </p>
           <Link
             href="/contact"
-            className="inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold text-foreground gold-gradient rounded-full hover:opacity-90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-gold/35"
+            className="btn-shimmer inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold text-foreground gold-gradient rounded-full hover:opacity-90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-gold/35 hover:scale-[1.03] active:scale-[0.98]"
           >
             Nous contacter
             <ArrowRight size={16} />
           </Link>
-        </div>
+        </Reveal>
       </section>
     </PublicLayout>
   );

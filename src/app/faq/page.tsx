@@ -1,7 +1,10 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-db";
+import { fallbackFaqs } from "@/lib/content-fallback";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -12,26 +15,25 @@ export const metadata: Metadata = {
 };
 
 export default async function FAQPage() {
-  const faqs = await prisma.fAQ.findMany({
-    where: { published: true },
-    orderBy: { order: "asc" },
-  });
+  const dbFaqs = await safeQuery(
+    "faq.list",
+    () =>
+      prisma.fAQ.findMany({
+        where: { published: true },
+        orderBy: { order: "asc" },
+      }),
+    []
+  );
+
+  const faqs = dbFaqs.length > 0 ? dbFaqs : fallbackFaqs;
 
   return (
     <PublicLayout>
-      <section className="py-20 lg:py-24 bg-champagne">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <div className="flex items-center gap-3 mb-5">
-              <span className="h-px w-8 bg-gold/60" />
-              <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium">FAQ</p>
-            </div>
-            <h1 className="font-serif text-4xl sm:text-5xl text-foreground leading-tight tracking-tight">
-              Questions fréquentes
-            </h1>
-          </Reveal>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="FAQ"
+        title="Questions fréquentes"
+        description="Tout ce que vous devez savoir pour participer, voter ou devenir partenaire."
+      />
 
       <section className="py-4 lg:py-8 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">

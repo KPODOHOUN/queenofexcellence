@@ -1,7 +1,9 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-db";
 import Image from "next/image";
 import type { Metadata } from "next";
 
@@ -14,29 +16,26 @@ export const metadata: Metadata = {
 };
 
 export default async function GaleriePage() {
-  const items = await prisma.galleryItem.findMany({
-    where: { published: true },
-    orderBy: { order: "asc" },
-    include: { event: { select: { name: true } } },
-  });
+  const items = await safeQuery(
+    "gallery.list",
+    () =>
+      prisma.galleryItem.findMany({
+        where: { published: true },
+        orderBy: { order: "asc" },
+        include: { event: { select: { name: true } } },
+      }),
+    []
+  );
 
   const categories = [...new Set(items.map((i) => i.category).filter(Boolean))];
 
   return (
     <PublicLayout>
-      <section className="py-20 lg:py-24 bg-champagne">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <div className="flex items-center gap-3 mb-5">
-              <span className="h-px w-8 bg-gold/60" />
-              <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium">Galerie</p>
-            </div>
-            <h1 className="font-serif text-4xl sm:text-5xl text-foreground leading-tight tracking-tight">
-              Moments d&apos;excellence
-            </h1>
-          </Reveal>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Galerie"
+        title="Moments d'excellence"
+        description="Revivez les instants les plus marquants de nos événements."
+      />
 
       <section className="py-4 lg:py-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">

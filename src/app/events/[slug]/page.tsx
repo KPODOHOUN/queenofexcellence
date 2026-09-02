@@ -3,6 +3,7 @@ import { CandidateCard } from "@/components/candidates/CandidateCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Reveal } from "@/components/ui/Reveal";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-db";
 import { getEventBlockReason } from "@/lib/events";
 import { formatDate, getEventStatusLabel } from "@/lib/utils";
 import Image from "next/image";
@@ -36,19 +37,23 @@ export default async function EventDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-
-  const event = await prisma.event.findUnique({
-    where: { slug, published: true },
-    include: {
-      candidates: {
-        where: { published: true, status: "APPROVED" },
-        orderBy: { number: "asc" },
-        include: { event: { select: { slug: true, name: true } } },
-      },
-      gallery: { where: { published: true }, orderBy: { order: "asc" } },
-      _count: { select: { candidates: true } },
-    },
-  });
+  const event = await safeQuery(
+    "events.detail",
+    () =>
+      prisma.event.findUnique({
+        where: { slug, published: true },
+        include: {
+          candidates: {
+            where: { published: true, status: "APPROVED" },
+            orderBy: { number: "asc" },
+            include: { event: { select: { slug: true, name: true } } },
+          },
+          gallery: { where: { published: true }, orderBy: { order: "asc" } },
+          _count: { select: { candidates: true } },
+        },
+      }),
+    null
+  );
 
   if (!event) notFound();
 

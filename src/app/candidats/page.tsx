@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-db";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -21,26 +22,36 @@ export default async function CandidatsPage({
 }) {
   const { event: eventSlug } = await searchParams;
 
-  const events = await prisma.event.findMany({
-    where: { published: true, archived: false },
-    orderBy: { date: "desc" },
-    select: { id: true, name: true, slug: true },
-  });
+  const events = await safeQuery(
+    "candidats.events",
+    () =>
+      prisma.event.findMany({
+        where: { published: true, archived: false },
+        orderBy: { date: "desc" },
+        select: { id: true, name: true, slug: true },
+      }),
+    []
+  );
 
   const selectedEvent = eventSlug
     ? events.find((e) => e.slug === eventSlug)
     : events[0];
 
   const candidates = selectedEvent
-    ? await prisma.candidate.findMany({
-        where: {
-          eventId: selectedEvent.id,
-          published: true,
-          status: "APPROVED",
-        },
-        orderBy: { number: "asc" },
-        include: { event: { select: { slug: true, name: true } } },
-      })
+    ? await safeQuery(
+        "candidats.list",
+        () =>
+          prisma.candidate.findMany({
+            where: {
+              eventId: selectedEvent.id,
+              published: true,
+              status: "APPROVED",
+            },
+            orderBy: { number: "asc" },
+            include: { event: { select: { slug: true, name: true } } },
+          }),
+        []
+      )
     : [];
 
   return (

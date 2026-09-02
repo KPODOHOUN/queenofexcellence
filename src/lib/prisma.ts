@@ -4,11 +4,15 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+export function isDatabaseConfigured(): boolean {
+  return Boolean(process.env.DATABASE_URL?.trim());
+}
+
 function createPrismaClient(): PrismaClient {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error(
-      "DATABASE_URL is not set. Define it in .env.local or in your hosting dashboard."
+      "DATABASE_URL is not set. Copiez .env.example vers .env.local, puis lancez : docker compose up -d && npm run db:push && npm run db:seed"
     );
   }
 
@@ -17,7 +21,18 @@ function createPrismaClient(): PrismaClient {
   });
 }
 
-export const prisma: PrismaClient =
-  globalForPrisma.prisma ?? createPrismaClient();
+function getPrismaClient(): PrismaClient {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient();
+  }
+  return globalForPrisma.prisma;
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+/** Lazy Prisma client — n'échoue qu'à la première requête, pas à l'import. */
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop, receiver) {
+    const client = getPrismaClient();
+    const value = Reflect.get(client, prop, client);
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+});

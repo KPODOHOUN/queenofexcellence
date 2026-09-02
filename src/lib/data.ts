@@ -46,12 +46,17 @@ export async function getSiteStats() {
 }
 
 export async function getSiteContent(key: string) {
-  const content = await prisma.siteContent.findUnique({ where: { key } });
-  if (!content) return null;
   try {
-    return JSON.parse(content.value);
-  } catch {
-    return content.value;
+    const content = await prisma.siteContent.findUnique({ where: { key } });
+    if (!content) return null;
+    try {
+      return JSON.parse(content.value);
+    } catch {
+      return content.value;
+    }
+  } catch (error) {
+    console.error(`getSiteContent("${key}"):`, error);
+    return null;
   }
 }
 

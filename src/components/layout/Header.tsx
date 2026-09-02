@@ -27,12 +27,13 @@ interface HeaderProps {
 }
 
 export function Header({ transparent = false }: HeaderProps) {
-  void transparent;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const pathname = usePathname();
   const moreRef = useRef<HTMLDivElement>(null);
+
+  const isTransparent = transparent && !scrolled;
 
   const isMoreActive = moreLinks.some((l) => l.href === pathname);
 
@@ -70,9 +71,10 @@ export function Header({ transparent = false }: HeaderProps) {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-shadow duration-500 animate-fade-in",
-        "bg-[#0c0c0c] border-b border-gold/15",
-        scrolled && "shadow-lg shadow-black/40"
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-500 animate-fade-in",
+        isTransparent
+          ? "bg-transparent border-b border-transparent"
+          : "glass-dark border-b border-gold/15 shadow-lg shadow-black/30"
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -159,7 +161,7 @@ export function Header({ transparent = false }: HeaderProps) {
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/vote"
-              className="hidden sm:inline-flex items-center px-5 py-2.5 text-[13px] font-semibold rounded-full text-foreground gold-gradient shadow-lg shadow-gold/20 transition-all duration-300 hover:shadow-gold/40 hover:-translate-y-0.5 active:translate-y-0 no-underline"
+              className="hidden sm:inline-flex items-center px-5 py-2.5 text-[13px] font-semibold rounded-full text-foreground gold-gradient btn-shimmer shadow-lg shadow-gold/20 transition-all duration-300 hover:shadow-gold/40 hover:-translate-y-0.5 active:translate-y-0 no-underline"
             >
               Voter maintenant
             </Link>
@@ -192,7 +194,7 @@ export function Header({ transparent = false }: HeaderProps) {
         )}
       >
         <div className="overflow-hidden">
-        <nav className="border-t border-gold/10 bg-[#0c0c0c] px-4 py-4 flex flex-col gap-0.5 max-h-[70vh] overflow-y-auto">
+        <nav className="border-t border-gold/10 bg-[#0c0c0c]/95 backdrop-blur-xl px-4 py-4 flex flex-col gap-0.5 max-h-[70vh] overflow-y-auto">
           {[...navLinks, ...moreLinks].map((link, i) => {
             const active = pathname === link.href;
             return (

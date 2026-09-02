@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Reveal } from "@/components/ui/Reveal";
 
 interface SectionHeadingProps {
   eyebrow?: string;
@@ -16,13 +17,7 @@ export function SectionHeading({
   className,
 }: SectionHeadingProps) {
   return (
-    <div
-      className={cn(
-        "mb-14",
-        align === "center" ? "text-center mx-auto max-w-2xl" : "max-w-xl",
-        className
-      )}
-    >
+    <Reveal blur className={cn("mb-14", align === "center" ? "text-center mx-auto max-w-2xl" : "max-w-xl", className)}>
       {eyebrow && (
         <div
           className={cn(
@@ -43,6 +38,6 @@ export function SectionHeading({
       {description && (
         <p className="mt-4 text-muted leading-relaxed text-[15px]">{description}</p>
       )}
-    </div>
+    </Reveal>
   );
 }

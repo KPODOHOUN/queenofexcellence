@@ -32,7 +32,7 @@ function chunk<T>(items: T[], size: number): T[][] {
 
 function PartnerLogo({ partner }: { partner: Partner }) {
   const content = (
-    <div className="group flex w-64 sm:w-72 lg:w-80 h-48 sm:h-52 lg:h-56 shrink-0 items-center justify-center rounded-2xl border border-gold/10 bg-white p-6 transition-all duration-500 hover:border-gold/30 hover:shadow-lg hover:shadow-gold/10 hover:-translate-y-1">
+    <div className="group flex w-64 sm:w-72 lg:w-80 h-48 sm:h-52 lg:h-56 shrink-0 items-center justify-center rounded-2xl border border-gold/10 bg-white p-6 transition-all duration-500 hover:border-gold/35 hover:shadow-xl hover:shadow-gold/15 hover:-translate-y-2 gold-ring">
       <Image
         src={partner.logo}
         alt={partner.name}
@@ -113,8 +113,9 @@ export function PartnersSection({ partners }: PartnersSectionProps) {
   }
 
   return (
-    <section id="partenaires" className="py-16 lg:py-20 bg-[whitesmoke]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="partenaires" className="relative py-16 lg:py-24 bg-[whitesmoke] overflow-hidden">
+      <div className="absolute inset-0 section-pattern opacity-30 pointer-events-none" />
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
           eyebrow="Partenaires"
           title="Ils nous font confiance"
