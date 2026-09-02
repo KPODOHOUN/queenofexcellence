@@ -1,10 +1,4 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/c2852916c/public_html/
-    - /bin/cp -R * $DEPLOYPATH
-    - /bin/cp -R .cpanel.yml .gitignore .env.example $DEPLOYPATH 2>/dev/null || true
-    - /bin/bash -c "cd $DEPLOYPATH && npm install --omit=dev"
-    - /bin/bash -c "cd $DEPLOYPATH && npx prisma generate"
-    - /bin/bash -c "cd $DEPLOYPATH && npx prisma migrate deploy"
-    - /bin/bash -c "cd $DEPLOYPATH && NODE_ENV=production npm run build"
+    - /bin/bash scripts/cpanel-deploy.sh
