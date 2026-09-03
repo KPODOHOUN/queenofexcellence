@@ -2,51 +2,52 @@
 
 Plateforme événementielle pour concours, votes et billetterie.
 
-## Démarrage rapide (dev local)
+**Base de données : SQLite** (fichier `prisma/data.db` — pas de PostgreSQL externe)
 
-### 1. Installer les dépendances
+## Déploiement LWS (simple)
+
+### Sur ton PC
 
 ```bash
 npm install
-```
-
-### 2. Base de données
-
-**Avec Docker** (recommandé) :
-
-```bash
-docker compose up -d
 npm run db:push
 npm run db:seed
+npm run deploy:pack
 ```
 
-La config par défaut est dans `.env.development` (PostgreSQL sur le port `5433`).
+Upload **`queenofex-deploy.zip`** dans `~/queenofexcellence` sur cPanel.
 
-**Sans Docker** : copiez `.env.example` vers `.env.local` et renseignez votre `DATABASE_URL` (Neon, Supabase, cPanel…).
+### Sur cPanel LWS
+
+**Variables Node.js App :**
+
+| Variable | Valeur |
+|---|---|
+| `DATABASE_URL` | `file:./prisma/data.db` |
+| `AUTH_SECRET` | clé secrète |
+| `NEXTAUTH_URL` | `https://queenofexcellence.com` |
+| `NODE_ENV` | `production` |
+
+**Terminal :**
+```bash
+source /home/c2852916c/nodevenv/queenofexcellence/18/bin/activate
+cd ~/queenofexcellence
+bash install.sh
+```
+
+**Node.js App** → `node server.js` → **Restart**
+
+Admin (après seed) : `admin@queenofexcellence.com` / `admin123`
+
+---
+
+## Dev local
 
 ```bash
-cp .env.example .env.local
-# éditez .env.local avec votre DATABASE_URL
+npm install
 npm run db:push
 npm run db:seed
-```
-
-### 3. Lancer le serveur
-
-```bash
 npm run dev
 ```
 
-Ouvrez [http://localhost:3000](http://localhost:3000).
-
-**Admin** (après seed) : `admin@queenofexcellence.com` / `admin123`
-
-## Scripts utiles
-
-| Commande | Description |
-|---|---|
-| `npm run dev` | Serveur de développement |
-| `npm run build` | Build production |
-| `npm run db:push` | Synchroniser le schéma Prisma |
-| `npm run db:seed` | Données de démonstration |
-| `npm run db:local` | Docker + push + seed en une commande |
+Fichier `.env.development` : `DATABASE_URL="file:./prisma/data.db"`

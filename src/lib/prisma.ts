@@ -12,7 +12,7 @@ function createPrismaClient(): PrismaClient {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error(
-      "DATABASE_URL is not set. Copiez .env.example vers .env.local, puis lancez : docker compose up -d && npm run db:push && npm run db:seed"
+      'DATABASE_URL is not set. Exemple : file:./prisma/data.db — puis npm run db:push && npm run db:seed'
     );
   }
 

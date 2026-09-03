@@ -35,11 +35,11 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Prisma
+# Prisma / SQLite
+prisma/*.db
+prisma/*.db-journal
 prisma/dev.db
 prisma/dev.db-journal
-prisma/dev2.db
-prisma/dev2.db-journal
 
 # TypeScript
 *.tsbuildinfo
@@ -50,3 +50,5 @@ coverage/
 
 # Misc
 *.log
+release/
+queenofex-deploy.zip
