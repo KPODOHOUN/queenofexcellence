@@ -23,7 +23,7 @@ Upload **`queenofex-deploy.zip`** dans `~/queenofexcellence` sur cPanel.
 
 | Variable | Valeur |
 |---|---|
-| `DATABASE_URL` | `file:./prisma/data.db` |
+| `DATABASE_URL` | `file:./data.db` |
 | `AUTH_SECRET` | clé secrète |
 | `NEXTAUTH_URL` | `https://queenofexcellence.com` |
 | `NODE_ENV` | `production` |
@@ -50,4 +50,4 @@ npm run db:seed
 npm run dev
 ```
 
-Fichier `.env.development` : `DATABASE_URL="file:./prisma/data.db"`
+Fichier `.env.development` : `DATABASE_URL="file:./data.db"`

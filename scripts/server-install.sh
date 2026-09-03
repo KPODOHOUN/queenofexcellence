@@ -5,7 +5,7 @@ set -euo pipefail
 echo "=== Installation Queen of Excellence (SQLite) ==="
 
 export NODE_ENV=production
-export DATABASE_URL="${DATABASE_URL:-file:./prisma/data.db}"
+export DATABASE_URL="${DATABASE_URL:-file:./data.db}"
 
 echo "→ DATABASE_URL = $DATABASE_URL"
 echo "→ npm install (prod uniquement)..."
@@ -22,6 +22,6 @@ npx prisma db seed || echo "(seed ignoré si déjà fait)"
 
 echo ""
 echo "✓ Installation terminée !"
-echo "  Variables cPanel : DATABASE_URL=file:./prisma/data.db"
+echo "  Variables cPanel : DATABASE_URL=file:./data.db"
 echo "  Setup Node.js App → Restart → node server.js"
 echo ""

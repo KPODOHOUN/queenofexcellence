@@ -14,7 +14,7 @@ tar --exclude=node_modules --exclude=.git --exclude=deploy.log --exclude='prisma
 
 cd "$DEPLOYPATH"
 export NODE_ENV=production
-export DATABASE_URL="${DATABASE_URL:-file:./prisma/data.db}"
+export DATABASE_URL="${DATABASE_URL:-file:./data.db}"
 export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=512}"
 
 log "npm install..."

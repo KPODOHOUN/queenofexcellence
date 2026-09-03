@@ -23,7 +23,7 @@ if [ -f .env.local ]; then
   echo "✓ Variables chargées depuis .env.local"
 fi
 
-export DATABASE_URL="${DATABASE_URL:-file:./prisma/data.db}"
+export DATABASE_URL="${DATABASE_URL:-file:./data.db}"
 echo "→ Base de données : $DATABASE_URL"
 
 echo "→ Installation des dépendances (incl. build)..."
@@ -51,7 +51,7 @@ DÉPLOIEMENT LWS — 4 ÉTAPES
    - Extraire ce zip dans public_html/ (via Gestionnaire de fichiers cPanel)
 
 2. VARIABLES (cPanel → Variables d'environnement)
-   DATABASE_URL = file:./prisma/data.db
+   DATABASE_URL = file:./data.db
    AUTH_SECRET  = (openssl rand -base64 32)
    NEXTAUTH_URL = https://queenofexcellence.com
    NODE_ENV     = production
