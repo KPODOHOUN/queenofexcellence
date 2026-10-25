@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "node server.js",
     "dev:ready": "bash scripts/start-local-mysql.sh && node scripts/setup-local-db.js && next dev",
     "db:start": "bash scripts/start-local-mysql.sh",
