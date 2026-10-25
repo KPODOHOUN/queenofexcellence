@@ -37,7 +37,7 @@ mkdir -p release/public/uploads
 touch release/public/uploads/.gitkeep
 # Cache et artefacts dev inutiles en production (~1 Go en moins)
 rm -rf release/.next/dev release/.next/cache release/.next/diagnostics release/.next/trace 2>/dev/null || true
-cp package.json package-lock.json next.config.ts server.js release/
+cp package.json package-lock.json next.config.mjs server.js release/
 mkdir -p release/src/lib
 cp src/lib/image-loader.ts release/src/lib/image-loader.ts
 cp deploy/LISEZMOI.txt release/LISEZMOI.txt

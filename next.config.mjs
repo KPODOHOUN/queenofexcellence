@@ -1,5 +1,3 @@
-import type { NextConfig } from "next";
-
 const isDev = process.env.NODE_ENV !== "production";
 
 const kkiapayHosts = "https://*.kkiapay.me https://cdn.kkiapay.me https://api.kkiapay.me https://widget.kkiapay.me https://widget-v3.kkiapay.me";
@@ -17,7 +15,8 @@ const csp = [
   `form-action 'self' ${kkiapayHosts}`,
 ].join("; ");
 
-const nextConfig: NextConfig = {
+/** @type {import("next").NextConfig} */
+const nextConfig = {
   images: {
     loader: "custom",
     loaderFile: "./src/lib/image-loader.ts",
