@@ -22,6 +22,7 @@ interface Event {
   blocked: boolean;
   image: string | null;
   banner: string | null;
+  categories?: { name: string }[];
   _count?: { candidates: number; votes: number };
 }
 
@@ -37,6 +38,7 @@ const emptyForm = {
   published: false,
   image: "",
   banner: "",
+  categoriesText: "",
 };
 
 const statusOptions = [
@@ -54,6 +56,7 @@ export default function AdminEventsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     fetch(`/api/admin/events?page=${page}`)
@@ -65,20 +68,23 @@ export default function AdminEventsPage() {
       });
   }, [page]);
 
-  function handleEdit(event: Event) {
+  async function handleEdit(event: Event) {
+    const res = await fetch(`/api/admin/events/${event.id}`);
+    const detail = res.ok ? await res.json() : event;
     setEditingId(event.id);
     setForm({
-      name: event.name,
-      description: event.description,
-      shortDesc: event.shortDesc || "",
-      date: event.date.slice(0, 10),
-      time: event.time || "",
-      location: event.location,
-      votePrice: event.votePrice,
-      status: event.status,
-      published: event.published,
-      image: event.image || "",
-      banner: event.banner || "",
+      name: detail.name,
+      description: detail.description,
+      shortDesc: detail.shortDesc || "",
+      date: detail.date.slice(0, 10),
+      time: detail.time || "",
+      location: detail.location,
+      votePrice: detail.votePrice,
+      status: detail.status,
+      published: detail.published,
+      image: detail.image || "",
+      banner: detail.banner || "",
+      categoriesText: (detail.categories ?? []).map((c: { name: string }) => c.name).join("\n"),
     });
     setShowForm(true);
   }
@@ -91,12 +97,34 @@ export default function AdminEventsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setFormError("");
+
+    const categories = form.categoriesText
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    const payload = {
+      name: form.name,
+      description: form.description,
+      shortDesc: form.shortDesc,
+      date: form.date,
+      time: form.time,
+      location: form.location,
+      votePrice: form.votePrice,
+      status: form.status,
+      published: form.published,
+      image: form.image,
+      banner: form.banner,
+      categories,
+    };
+
     const res = await fetch(
       editingId ? `/api/admin/events/${editingId}` : "/api/admin/events",
       {
         method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       }
     );
     if (res.ok) {
@@ -108,6 +136,17 @@ export default function AdminEventsPage() {
         setTotal((t) => t + 1);
       }
       handleCancelForm();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      if (Array.isArray(data.error)) {
+        setFormError(
+          data.error.map((i: { message?: string; path?: (string | number)[] }) =>
+            `${(i.path ?? []).join(".")}: ${i.message ?? "invalide"}`
+          ).join(" · ")
+        );
+      } else {
+        setFormError(typeof data.error === "string" ? data.error : "Impossible d'enregistrer l'événement");
+      }
     }
   }
 
@@ -192,7 +231,21 @@ export default function AdminEventsPage() {
               </select>
             </div>
           </div>
-          <textarea placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required rows={3} className="w-full px-3 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+          <textarea placeholder="Description (minimum 10 caractères)" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required minLength={10} rows={3} className="w-full px-3 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+          {formError && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{formError}</p>
+          )}
+          <div>
+            <label className="block text-xs text-muted mb-1.5">Catégories (une par ligne)</label>
+            <textarea
+              placeholder={"Senior\nJunior\nInternational"}
+              value={form.categoriesText}
+              onChange={(e) => setForm({ ...form, categoriesText: e.target.value })}
+              rows={4}
+              className="w-full px-3 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all font-mono text-sm"
+            />
+            <p className="text-xs text-muted mt-1">Ex : Senior, Junior, International — chaque catégorie a son propre classement.</p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ImageUploadField
               label="Image vignette"

@@ -1,7 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import { findById } from "@/lib/db/crud";
+import { findEventBySlug } from "@/lib/db/models/events";
 
 export type EventRecord = {
   id: string;
+  name?: string;
+  votePrice?: number;
   published: boolean;
   archived: boolean;
   blocked: boolean;
@@ -24,7 +27,7 @@ export function getEventBlockReason(event: EventRecord): string | null {
 }
 
 export async function getEventForVoting(eventId: string) {
-  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  const event = await findById<EventRecord>("event", eventId);
   if (!event) return { event: null, error: "Événement introuvable" as const };
   const blockReason = getEventBlockReason(event);
   if (blockReason) return { event: null, error: blockReason };
@@ -36,7 +39,5 @@ export async function getEventForTicketing(eventId: string) {
 }
 
 export async function getEventBySlugForPublic(slug: string) {
-  return prisma.event.findFirst({
-    where: { slug, published: true, archived: false },
-  });
+  return findEventBySlug(slug, true);
 }

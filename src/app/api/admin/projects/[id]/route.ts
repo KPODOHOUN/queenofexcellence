@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { deleteRow, updateRow } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
@@ -27,7 +27,7 @@ export async function PUT(
     const data = schema.parse(body);
     const updateData: Record<string, unknown> = { ...data };
     if (data.title && !data.slug) updateData.slug = slugify(data.title);
-    const project = await prisma.project.update({ where: { id }, data: updateData });
+    const project = await updateRow("project", id, updateData);
     return NextResponse.json(project);
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -45,6 +45,6 @@ export async function DELETE(
   if (error) return error;
   const { id } = await params;
 
-  await prisma.project.delete({ where: { id } });
+  await deleteRow("project", id);
   return NextResponse.json({ success: true });
 }

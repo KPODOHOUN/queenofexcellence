@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { findPublicTickets } from "@/lib/db";
 import { safeQuery } from "@/lib/safe-db";
 
 export async function GET(request: NextRequest) {
@@ -10,19 +10,7 @@ export async function GET(request: NextRequest) {
 
   const tickets = await safeQuery(
     "api.tickets",
-    () =>
-      prisma.ticket.findMany({
-        where: { eventId, active: true },
-        orderBy: { price: "asc" },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          price: true,
-          quantity: true,
-          sold: true,
-        },
-      }),
+    () => findPublicTickets(eventId),
     []
   );
 

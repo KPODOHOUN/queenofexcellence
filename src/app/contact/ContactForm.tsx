@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 
 const SUBJECT_PRESETS = [
-  "Partenariat",
   "Candidature",
   "Presse & médias",
   "Billetterie",

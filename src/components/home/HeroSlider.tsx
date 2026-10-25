@@ -21,8 +21,10 @@ interface HeroSliderProps {
 }
 
 const SLIDE_DURATION = 6000;
+const MAX_SLIDES = 3;
 
-export function HeroSlider({ slides }: HeroSliderProps) {
+export function HeroSlider({ slides: rawSlides }: HeroSliderProps) {
+  const slides = rawSlides.slice(0, MAX_SLIDES);
   const [current, setCurrent] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
@@ -47,6 +49,23 @@ export function HeroSlider({ slides }: HeroSliderProps) {
     return () => clearInterval(timer);
   }, [next, slides.length]);
 
+  // Précharge les slides suivants pour éviter l'attente au changement
+  useEffect(() => {
+    const links: HTMLLinkElement[] = [];
+    for (const slide of slides) {
+      if (!slide.image.startsWith("/")) continue;
+      const link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "image";
+      link.href = slide.image;
+      document.head.appendChild(link);
+      links.push(link);
+    }
+    return () => {
+      for (const link of links) link.remove();
+    };
+  }, [slides]);
+
   if (slides.length === 0) return null;
 
   const slide = slides[current];
@@ -56,7 +75,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
   };
 
   return (
-    <section className="relative h-[100svh] min-h-[600px] max-h-[900px] overflow-hidden bg-[#0a0a0a]">
+    <section className="relative h-[82svh] min-h-[480px] max-h-[720px] overflow-hidden bg-[#0a0a0a]">
       {/* Background slides */}
       {slides.map((s, i) => (
         <div
@@ -103,7 +122,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
 
       {/* Content */}
       <div className="relative z-20 h-full flex items-center justify-center">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-24 pb-32 text-center">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-20 pb-24 text-center">
           <div key={slide.id} className="max-w-3xl mx-auto">
             {slide.subtitle && (
               <p className="inline-flex items-center justify-center gap-3 text-[11px] sm:text-xs tracking-[0.35em] uppercase text-gold mb-5 font-medium animate-fade-in-up stagger-1">
@@ -112,11 +131,11 @@ export function HeroSlider({ slides }: HeroSliderProps) {
                 <span className="w-8 h-px bg-gold/70" />
               </p>
             )}
-            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-white leading-[1.08] mb-6 tracking-tight drop-shadow-lg animate-fade-in-blur stagger-2">
+            <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-white leading-[1.08] mb-4 tracking-tight drop-shadow-lg animate-fade-in-blur stagger-2">
               {slide.title}
             </h1>
             {slide.description && (
-              <p className="text-base sm:text-lg text-white/80 leading-relaxed mb-10 max-w-2xl mx-auto font-light animate-fade-in-up stagger-3">
+              <p className="text-sm sm:text-base text-white/80 leading-relaxed mb-7 max-w-xl mx-auto font-light animate-fade-in-up stagger-3">
                 {slide.description}
               </p>
             )}
@@ -124,7 +143,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
               {slide.ctaPrimary && (
                 <Link
                   href={slide.ctaPrimary.href}
-                  className="btn-shimmer inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold text-foreground gold-gradient rounded-full hover:opacity-90 transition-all duration-300 shadow-lg shadow-gold/25 hover:shadow-gold/40 hover:scale-[1.03] active:scale-[0.98]"
+                  className="btn-shimmer inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-foreground gold-gradient rounded-full hover:opacity-90 transition-all duration-300 shadow-lg shadow-gold/25 hover:shadow-gold/40 hover:scale-[1.03] active:scale-[0.98]"
                 >
                   {slide.ctaPrimary.label}
                 </Link>
@@ -132,7 +151,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
               {slide.ctaSecondary && (
                 <Link
                   href={slide.ctaSecondary.href}
-                  className="inline-flex items-center gap-2 px-8 py-3.5 text-sm font-medium text-white border border-gold/40 rounded-full hover:bg-gold/15 backdrop-blur-md transition-all duration-300 hover:border-gold/60 hover:scale-[1.02] active:scale-[0.98]"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white border border-gold/40 rounded-full hover:bg-gold/15 backdrop-blur-md transition-all duration-300 hover:border-gold/60 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   {slide.ctaSecondary.label}
                   <ArrowRight size={16} />
@@ -149,14 +168,14 @@ export function HeroSlider({ slides }: HeroSliderProps) {
           <button
             onClick={prev}
             aria-label="Slide précédent"
-            className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full border border-gold/30 bg-gold/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-gold/25 hover:border-gold/50 hover:scale-110 transition-all duration-300 active:scale-95"
+            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full border border-gold/30 bg-gold/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-gold/25 hover:border-gold/50 hover:scale-110 transition-all duration-300 active:scale-95"
           >
             <ChevronLeft size={20} />
           </button>
           <button
             onClick={next}
             aria-label="Slide suivant"
-            className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full border border-gold/30 bg-gold/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-gold/25 hover:border-gold/50 hover:scale-110 transition-all duration-300 active:scale-95"
+            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full border border-gold/30 bg-gold/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-gold/25 hover:border-gold/50 hover:scale-110 transition-all duration-300 active:scale-95"
           >
             <ChevronRight size={20} />
           </button>

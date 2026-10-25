@@ -2,52 +2,57 @@
 
 Plateforme événementielle pour concours, votes et billetterie.
 
-**Base de données : SQLite** (fichier `prisma/data.db` — pas de PostgreSQL externe)
+**Base de données : MySQL** (LWS/cPanel — sans Prisma)
 
-## Déploiement LWS (simple)
+## Déploiement LWS (méthode zip — recommandée)
 
 ### Sur ton PC
 
 ```bash
 npm install
-npm run db:push
-npm run db:seed
 npm run deploy:pack
 ```
 
-Upload **`queenofex-deploy.zip`** dans `~/queenofexcellence` sur cPanel.
+Envoie `queenofex-deploy.zip` sur le serveur.
 
-### Sur cPanel LWS
+### Sur LWS (cPanel)
 
-**Variables Node.js App :**
+1. **phpMyAdmin** → importer `database/schema.mysql.sql` puis `seed.mysql.sql`
+2. **Gestionnaire de fichiers** → extraire le zip dans `~/queenofexcellence`
+3. **Copier** `deploy/public_html.htaccess` → `~/public_html/.htaccess`
+4. **Setup Node.js App** → variables (voir `deploy/LISEZMOI.txt`)
+5. **Terminal** → `cd ~/queenofexcellence && bash install.sh`
+6. **Arrêter** l'app 2 min → **Redémarrer**
 
-| Variable | Valeur |
-|---|---|
-| `DATABASE_URL` | `file:./data.db` |
-| `AUTH_SECRET` | clé secrète |
-| `NEXTAUTH_URL` | `https://queenofexcellence.com` |
-| `NODE_ENV` | `production` |
+Admin : `admin@queenofexcellence.com` / `admin123`
 
-**Terminal :**
-```bash
-source /home/c2852916c/nodevenv/queenofexcellence/18/bin/activate
-cd ~/queenofexcellence
-bash install.sh
-```
-
-**Node.js App** → `node server.js` → **Restart**
-
-Admin (après seed) : `admin@queenofexcellence.com` / `admin123`
+Le fichier `deploy/LISEZMOI.txt` (inclus dans le zip) contient la checklist complète.
 
 ---
 
 ## Dev local
 
+**Une commande pour tout lancer :**
+
 ```bash
-npm install
-npm run db:push
-npm run db:seed
-npm run dev
+npm run dev:ready
 ```
 
-Fichier `.env.development` : `DATABASE_URL="file:./data.db"`
+Cela démarre MariaDB embarqué (port 3307), applique schéma + seed, puis lance Next.js.
+
+**Étapes manuelles :**
+
+```bash
+npm run db:start    # MariaDB local dans .local/mysql
+npm run db:setup    # schéma + données de démo
+npm run dev         # http://localhost:3001
+```
+
+**Identifiants admin :** `admin@queenofexcellence.com` / `admin123`
+
+`.env.local` doit contenir :
+```
+DATABASE_URL="mysql://root@127.0.0.1:3307/queenofexcellence"
+AUTH_SECRET="dev-only-secret-change-in-production"
+NEXTAUTH_URL="http://localhost:3001"
+```

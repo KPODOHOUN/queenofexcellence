@@ -5,6 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const payload = await request.text();
     const signature =
+      request.headers.get("x-kkiapay-secret") ||
       request.headers.get("x-feexpay-signature") ||
       request.headers.get("x-webhook-signature") ||
       "";

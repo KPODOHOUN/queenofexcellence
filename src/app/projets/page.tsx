@@ -2,7 +2,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
-import { prisma } from "@/lib/prisma";
+import { findMany } from "@/lib/db/crud";
 import { safeQuery } from "@/lib/safe-db";
 import Image from "next/image";
 import type { Metadata } from "next";
@@ -18,15 +18,16 @@ export const metadata: Metadata = {
 export default async function ProjetsPage() {
   const projects = await safeQuery(
     "projects.list",
-    () =>
-      prisma.project.findMany({
-        where: { published: true },
-        orderBy: { order: "asc" },
-      }),
+    () => findMany("project", "published = 1", [], "`order` ASC"),
     []
   );
 
-  const [featured, ...rest] = projects;
+  const [featured, ...rest] = projects as {
+    id: string;
+    title: string;
+    description: string;
+    image?: string | null;
+  }[];
 
   return (
     <PublicLayout>

@@ -36,7 +36,7 @@ export default async function AProposPage() {
   return (
     <PublicLayout>
       {/* Hero */}
-      <section className="py-20 lg:py-28 bg-champagne">
+      <section className="py-14 lg:py-20 bg-champagne">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
             <div className="flex items-center gap-3 mb-5">
@@ -45,7 +45,7 @@ export default async function AProposPage() {
                 À propos
               </p>
             </div>
-            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-foreground leading-tight tracking-tight max-w-2xl">
+            <h1 className="font-serif text-2xl sm:text-3xl lg:text-5xl text-foreground leading-tight tracking-tight max-w-2xl">
               À propos de Queen of Excellence
             </h1>
             <p className="mt-4 text-xl sm:text-2xl font-serif text-gold-dark max-w-2xl">
@@ -68,7 +68,7 @@ export default async function AProposPage() {
       </section>
 
       {/* Notre histoire */}
-      <section className="py-20 lg:py-28 bg-white">
+      <section className="py-14 lg:py-20 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
             <div className="flex items-center gap-3 mb-5">
@@ -77,7 +77,7 @@ export default async function AProposPage() {
                 Notre histoire
               </p>
             </div>
-            <h2 className="font-serif text-3xl sm:text-4xl text-foreground leading-tight tracking-tight mb-8">
+            <h2 className="font-serif text-2xl sm:text-3xl text-foreground leading-tight tracking-tight mb-8">
               De Miss Belle et Intelligente à Queen of Excellence
             </h2>
           </Reveal>
@@ -121,7 +121,7 @@ export default async function AProposPage() {
                   key={stat.label}
                   className="text-center p-6 rounded-2xl bg-champagne border border-gold/10"
                 >
-                  <p className="font-serif text-3xl sm:text-4xl gold-gradient-text">
+                  <p className="font-serif text-2xl sm:text-3xl gold-gradient-text">
                     {stat.value}
                   </p>
                   <p className="text-sm text-muted mt-1">{stat.label}</p>
@@ -133,7 +133,7 @@ export default async function AProposPage() {
       </section>
 
       {/* Notre mission */}
-      <section className="py-20 lg:py-28 bg-[#0c0c0c] relative overflow-hidden">
+      <section className="py-14 lg:py-20 bg-[#0c0c0c] relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
@@ -143,7 +143,7 @@ export default async function AProposPage() {
                 Notre mission
               </p>
             </div>
-            <h2 className="font-serif text-3xl sm:text-4xl text-white leading-tight tracking-tight mb-12">
+            <h2 className="font-serif text-2xl sm:text-3xl text-white leading-tight tracking-tight mb-12">
               Ce que nous voulons accomplir
             </h2>
           </Reveal>
@@ -166,7 +166,7 @@ export default async function AProposPage() {
       </section>
 
       {/* Rejoignez l'aventure */}
-      <section className="py-20 lg:py-28 bg-champagne">
+      <section className="py-14 lg:py-20 bg-champagne">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <Reveal>
             <div className="flex items-center justify-center gap-3 mb-5">
@@ -176,7 +176,7 @@ export default async function AProposPage() {
               </p>
               <span className="h-px w-8 bg-gold/60" />
             </div>
-            <h2 className="font-serif text-3xl sm:text-4xl text-foreground leading-tight tracking-tight mb-6">
+            <h2 className="font-serif text-2xl sm:text-3xl text-foreground leading-tight tracking-tight mb-6">
               Faites partie de l&apos;excellence
             </h2>
             <p className="text-muted leading-relaxed text-[15px] sm:text-base mb-10 max-w-2xl mx-auto">
@@ -204,7 +204,7 @@ export default async function AProposPage() {
       </section>
 
       {/* Mot de bienvenue */}
-      <section className="py-20 lg:py-28 bg-white">
+      <section className="py-14 lg:py-20 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
             <div className="flex items-center gap-3 mb-5">
@@ -213,14 +213,14 @@ export default async function AProposPage() {
                 Mot de bienvenue
               </p>
             </div>
-            <h2 className="font-serif text-3xl sm:text-4xl text-foreground leading-tight tracking-tight mb-8">
+            <h2 className="font-serif text-2xl sm:text-3xl text-foreground leading-tight tracking-tight mb-8">
               Par le Promoteur
             </h2>
           </Reveal>
 
           <Reveal delay={100}>
             <blockquote className="relative p-8 lg:p-10 rounded-2xl bg-champagne border border-gold/15">
-              <span className="absolute top-6 left-8 font-serif text-6xl text-gold/20 leading-none">
+              <span className="absolute top-5 left-6 font-serif text-5xl text-gold/20 leading-none">
                 &ldquo;
               </span>
               <div className="space-y-4 text-muted leading-relaxed relative z-10">

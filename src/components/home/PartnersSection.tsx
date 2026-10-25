@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { Handshake, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Reveal } from "@/components/ui/Reveal";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 
 type Partner = {
@@ -20,25 +20,34 @@ interface PartnersSectionProps {
   partners: Partner[];
 }
 
-const PER_SLIDE = 4;
+const AUTOPLAY_MS = 4500;
 
-function chunk<T>(items: T[], size: number): T[][] {
-  const groups: T[][] = [];
-  for (let i = 0; i < items.length; i += size) {
-    groups.push(items.slice(i, i + size));
-  }
-  return groups;
+function useVisibleCount() {
+  const [count, setCount] = useState(1);
+
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth;
+      if (w >= 1024) setCount(3);
+      else if (w >= 640) setCount(2);
+      else setCount(1);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  return count;
 }
 
 function PartnerLogo({ partner }: { partner: Partner }) {
   const content = (
-    <div className="group flex w-64 sm:w-72 lg:w-80 h-48 sm:h-52 lg:h-56 shrink-0 items-center justify-center rounded-2xl border border-gold/10 bg-white p-6 transition-all duration-500 hover:border-gold/35 hover:shadow-xl hover:shadow-gold/15 hover:-translate-y-2 gold-ring">
-      <Image
+    <div className="group mx-2 sm:mx-3 flex h-36 sm:h-40 lg:h-44 items-center justify-center rounded-xl border border-gold/10 bg-white p-4 transition-all duration-500 hover:border-gold/35 hover:shadow-lg hover:shadow-gold/15 hover:-translate-y-1 gold-ring">
+      <img
         src={partner.logo}
         alt={partner.name}
-        width={340}
-        height={220}
-        className="max-h-36 sm:max-h-40 lg:max-h-44 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+        className="max-h-24 sm:max-h-28 lg:max-h-32 w-auto max-w-full object-contain transition-transform duration-500 group-hover:scale-105"
+        loading="lazy"
       />
     </div>
   );
@@ -55,65 +64,57 @@ function PartnerLogo({ partner }: { partner: Partner }) {
 }
 
 export function PartnersSection({ partners }: PartnersSectionProps) {
-  const slides = chunk(partners, PER_SLIDE);
-  const [current, setCurrent] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const visibleCount = useVisibleCount();
+  const maxIndex = Math.max(0, partners.length - visibleCount);
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   const goTo = useCallback(
-    (index: number) => {
-      if (isTransitioning || slides.length === 0) return;
-      setIsTransitioning(true);
-      setCurrent((index + slides.length) % slides.length);
-      setTimeout(() => setIsTransitioning(false), 700);
+    (next: number) => {
+      if (partners.length === 0) return;
+      setIndex(((next % (maxIndex + 1)) + (maxIndex + 1)) % (maxIndex + 1));
     },
-    [isTransitioning, slides.length]
+    [maxIndex, partners.length]
   );
 
-  const next = useCallback(() => goTo(current + 1), [current, goTo]);
-  const prev = useCallback(() => goTo(current - 1), [current, goTo]);
+  const next = useCallback(() => goTo(index + 1), [goTo, index]);
+  const prev = useCallback(() => goTo(index - 1), [goTo, index]);
 
   useEffect(() => {
-    if (slides.length <= 1) return;
-    const timer = setInterval(next, 6000);
+    setIndex((i) => Math.min(i, maxIndex));
+  }, [maxIndex]);
+
+  useEffect(() => {
+    if (partners.length <= visibleCount || paused) return;
+    const timer = setInterval(next, AUTOPLAY_MS);
     return () => clearInterval(timer);
-  }, [next, slides.length]);
+  }, [next, partners.length, visibleCount, paused]);
 
   if (partners.length === 0) {
     return (
-      <section id="partenaires" className="py-16 lg:py-20 bg-[whitesmoke]">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Reveal>
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white border border-gold/15 mb-6">
-              <Handshake size={24} className="text-gold" />
-            </div>
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <span className="h-px w-8 bg-gold/60" />
-              <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium">Partenaires</p>
-              <span className="h-px w-8 bg-gold/60" />
-            </div>
-            <h2 className="font-serif text-3xl sm:text-4xl text-foreground leading-tight tracking-tight mb-5">
-              Devenez partenaire
-            </h2>
-            <p className="text-muted leading-relaxed text-[15px] mb-8 max-w-xl mx-auto">
-              Nous n&apos;avons pas encore de sponsor officiel pour cet événement. Votre marque
-              souhaite s&apos;associer à la célébration de l&apos;excellence féminine ?
-              Contactez-nous pour devenir partenaire.
-            </p>
-            <Link
-              href="/contact"
-              className="inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold text-foreground gold-gradient rounded-full shadow-lg shadow-gold/20 hover:shadow-gold/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 group"
-            >
-              Nous contacter
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </Reveal>
+      <section id="partenaires" className="relative py-12 lg:py-16 bg-[whitesmoke] overflow-hidden">
+        <div className="absolute inset-0 section-pattern opacity-30 pointer-events-none" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <SectionHeading
+            eyebrow="Partenaires"
+            title="Ils nous font confiance"
+            description="Des organisations engagées à nos côtés pour célébrer l'excellence féminine."
+            align="center"
+          />
+          <EmptyState
+            title="Aucun partenaire publié pour le moment."
+            description="Ajoutez les logos depuis Admin → Partenaires (case « Publié » cochée)."
+          />
         </div>
       </section>
     );
   }
 
+  const showControls = partners.length > visibleCount;
+  const slidePercent = 100 / visibleCount;
+
   return (
-    <section id="partenaires" className="relative py-16 lg:py-24 bg-[whitesmoke] overflow-hidden">
+    <section id="partenaires" className="relative py-12 lg:py-16 bg-[whitesmoke] overflow-hidden">
       <div className="absolute inset-0 section-pattern opacity-30 pointer-events-none" />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
@@ -124,54 +125,67 @@ export function PartnersSection({ partners }: PartnersSectionProps) {
         />
 
         <Reveal className="relative">
-          <div className="relative min-h-[28rem] sm:min-h-[14rem] lg:min-h-[15rem]">
-            {slides.map((group, i) => (
+          <div
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+          >
+          <div className="relative px-10 sm:px-12">
+            {showControls && (
+              <>
+                <button
+                  type="button"
+                  onClick={prev}
+                  aria-label="Partenaires précédents"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-gold/30 bg-white flex items-center justify-center text-gold hover:bg-gold/10 hover:border-gold/50 transition-all duration-300 shadow-sm"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={next}
+                  aria-label="Partenaires suivants"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-gold/30 bg-white flex items-center justify-center text-gold hover:bg-gold/10 hover:border-gold/50 transition-all duration-300 shadow-sm"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </>
+            )}
+
+            <div className="overflow-hidden">
               <div
-                key={i}
-                className={cn(
-                  "flex flex-wrap items-center justify-center gap-4 lg:gap-6 transition-opacity duration-700 ease-in-out",
-                  i === current ? "opacity-100 relative" : "opacity-0 absolute inset-0 pointer-events-none"
-                )}
+                className="flex transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                style={{ transform: `translateX(-${index * slidePercent}%)` }}
               >
-                {group.map((partner) => (
-                  <PartnerLogo key={partner.id} partner={partner} />
+                {partners.map((partner) => (
+                  <div
+                    key={partner.id}
+                    className="shrink-0"
+                    style={{ width: `${slidePercent}%` }}
+                  >
+                    <PartnerLogo partner={partner} />
+                  </div>
                 ))}
               </div>
-            ))}
+            </div>
           </div>
 
-          {slides.length > 1 && (
-            <>
-              <button
-                onClick={prev}
-                aria-label="Partenaires précédents"
-                className="absolute -left-2 sm:left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-gold/30 bg-white flex items-center justify-center text-gold hover:bg-gold/10 hover:border-gold/50 transition-all duration-300"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <button
-                onClick={next}
-                aria-label="Partenaires suivants"
-                className="absolute -right-2 sm:right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-gold/30 bg-white flex items-center justify-center text-gold hover:bg-gold/10 hover:border-gold/50 transition-all duration-300"
-              >
-                <ChevronRight size={18} />
-              </button>
-
-              <div className="flex items-center justify-center gap-2 mt-8">
-                {slides.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => goTo(i)}
-                    aria-label={`Aller au groupe ${i + 1}`}
-                    className={cn(
-                      "h-1 rounded-full transition-all duration-500",
-                      i === current ? "w-8 bg-gold" : "w-3 bg-gold/25 hover:bg-gold/50"
-                    )}
-                  />
-                ))}
-              </div>
-            </>
+          {showControls && (
+            <div className="flex items-center justify-center gap-2 mt-8">
+              {Array.from({ length: maxIndex + 1 }).map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => goTo(i)}
+                  aria-label={`Slide ${i + 1}`}
+                  className={cn(
+                    "h-1 rounded-full transition-all duration-500",
+                    i === index ? "w-8 bg-gold" : "w-3 bg-gold/25 hover:bg-gold/50"
+                  )}
+                />
+              ))}
+            </div>
           )}
+          </div>
         </Reveal>
       </div>
     </section>

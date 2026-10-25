@@ -13,7 +13,7 @@ export default function AdminContentPage() {
     ctaPrimary: "",
     ctaSecondary: "",
   });
-  const [about, setAbout] = useState({ title: "", content: "", mission: "", vision: "" });
+  const [about, setAbout] = useState({ title: "", content: "", mission: "", vision: "", image: "" });
   const [social, setSocial] = useState<SocialLinks>(defaultSocialLinks);
   const [contact, setContact] = useState({ email: "", phone: "", address: "" });
   const [saved, setSaved] = useState<string | null>(null);
@@ -109,6 +109,12 @@ export default function AdminContentPage() {
           </div>
           <input placeholder="Titre" value={about.title} onChange={(e) => setAbout({ ...about, title: e.target.value })} className="w-full px-3 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
           <textarea placeholder="Contenu" value={about.content} onChange={(e) => setAbout({ ...about, content: e.target.value })} rows={4} className="w-full px-3 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
+          <ImageUploadField
+            label="Image (section À propos sur l'accueil)"
+            value={about.image}
+            onChange={(url) => setAbout({ ...about, image: url })}
+            hint="Format paysage recommandé — max 5 Mo"
+          />
           <textarea placeholder="Mission" value={about.mission} onChange={(e) => setAbout({ ...about, mission: e.target.value })} rows={2} className="w-full px-3 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
           <textarea placeholder="Vision" value={about.vision} onChange={(e) => setAbout({ ...about, vision: e.target.value })} rows={2} className="w-full px-3 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
           <button onClick={() => save("about", about)} className="px-6 py-2 text-sm text-white gold-gradient rounded-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300">Enregistrer À propos</button>

@@ -1,0 +1,15 @@
+# NE PAS copier tel quel — cPanel génère ce fichier via Setup Node.js App.
+# Ce modèle sert de référence uniquement.
+#
+# Créez l'app dans cPanel → Setup Node.js App :
+#   Racine : queenofexcellence | Démarrage : server.js | Node : 18 ou 20
+# cPanel écrit alors le bon PassengerNodejs automatiquement.
+
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+PassengerAppRoot "/home/c2852916c/queenofexcellence"
+PassengerBaseURI "/"
+PassengerNodejs "/home/c2852916c/nodevenv/queenofexcellence/XX/bin/node"
+PassengerAppType node
+PassengerStartupFile server.js
+PassengerStartTimeout 300
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END

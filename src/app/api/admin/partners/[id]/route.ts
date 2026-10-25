@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { deleteRow, updateRow } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { z } from "zod";
 
@@ -23,12 +23,9 @@ export async function PUT(
   try {
     const body = await request.json();
     const data = schema.parse(body);
-    const item = await prisma.partner.update({
-      where: { id },
-      data: {
-        ...data,
-        website: data.website === "" ? null : data.website,
-      },
+    const item = await updateRow("partner", id, {
+      ...data,
+      website: data.website === "" ? null : data.website,
     });
     return NextResponse.json(item);
   } catch (err) {
@@ -47,6 +44,6 @@ export async function DELETE(
   if (error) return error;
   const { id } = await params;
 
-  await prisma.partner.delete({ where: { id } });
+  await deleteRow("partner", id);
   return NextResponse.json({ success: true });
 }

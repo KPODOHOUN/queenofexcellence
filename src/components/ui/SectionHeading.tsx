@@ -17,7 +17,7 @@ export function SectionHeading({
   className,
 }: SectionHeadingProps) {
   return (
-    <Reveal blur className={cn("mb-14", align === "center" ? "text-center mx-auto max-w-2xl" : "max-w-xl", className)}>
+    <Reveal blur className={cn("mb-10", align === "center" ? "text-center mx-auto max-w-2xl" : "max-w-xl", className)}>
       {eyebrow && (
         <div
           className={cn(
@@ -32,11 +32,11 @@ export function SectionHeading({
           <span className="h-px w-8 bg-gold/60" />
         </div>
       )}
-      <h2 className="font-serif text-3xl sm:text-4xl lg:text-[2.75rem] text-foreground leading-tight tracking-tight">
+      <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2.125rem] text-foreground leading-tight tracking-tight">
         {title}
       </h2>
       {description && (
-        <p className="mt-4 text-muted leading-relaxed text-[15px]">{description}</p>
+        <p className="mt-3 text-muted leading-relaxed text-sm">{description}</p>
       )}
     </Reveal>
   );

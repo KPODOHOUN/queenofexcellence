@@ -10,9 +10,9 @@ interface SiteLogoProps {
 }
 
 const sizeMap = {
-  header: "h-10 w-10 lg:h-[46px] lg:w-[46px]",
-  footer: "h-20 w-20",
-  admin: "h-13 w-13",
+  header: "h-8 w-8 lg:h-9 lg:w-9",
+  footer: "h-14 w-14",
+  admin: "h-11 w-11",
 };
 
 export function SiteLogo({
@@ -36,7 +36,7 @@ export function SiteLogo({
         <span
           className={cn(
             "font-serif leading-tight transition-colors duration-300",
-            variant === "footer" ? "text-[1.35rem] tracking-tight" : "text-lg lg:text-xl",
+            variant === "footer" ? "text-lg tracking-tight" : "text-base lg:text-lg",
             transparent ? "text-white" : "text-foreground",
             textClassName
           )}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { createRow, listPaged } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { slugify } from "@/lib/utils";
 import { getPagination, paginatedResponse } from "@/lib/pagination";
@@ -19,10 +19,7 @@ export async function GET(request: NextRequest) {
   const { error } = await requireAdmin();
   if (error) return error;
   const { page, pageSize, skip, take } = getPagination(request);
-  const [projects, total] = await prisma.$transaction([
-    prisma.project.findMany({ orderBy: { order: "asc" }, skip, take }),
-    prisma.project.count(),
-  ]);
+  const { items: projects, total } = await listPaged("project", "`order` ASC", skip, take);
   return NextResponse.json(paginatedResponse(projects, total, page, pageSize));
 }
 
@@ -33,8 +30,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const data = schema.parse(body);
-    const project = await prisma.project.create({
-      data: { ...data, slug: data.slug || slugify(data.title) },
+    const project = await createRow("project", {
+      ...data,
+      slug: data.slug || slugify(data.title),
     });
     return NextResponse.json(project, { status: 201 });
   } catch (err) {

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { mkdir, writeFile } from "fs/promises";
+import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const ALLOWED_TYPES = new Set([
   "image/jpeg",
@@ -20,11 +24,17 @@ const EXT_MAP: Record<string, string> = {
   "image/gif": "gif",
 };
 
-/**
- * Détecte le vrai format d'une image à partir de sa signature binaire
- * (magic bytes), pour ne pas se fier au seul `Content-Type` déclaré par le
- * client — facilement falsifiable.
- */
+type UploadBlob = Blob & { name?: string; size: number; type?: string };
+
+function isUploadBlob(value: unknown): value is UploadBlob {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "arrayBuffer" in value &&
+    typeof (value as Blob).arrayBuffer === "function"
+  );
+}
+
 function detectImageType(buffer: Buffer): string | null {
   if (buffer.length < 12) return null;
 
@@ -72,26 +82,45 @@ function detectImageType(buffer: Buffer): string | null {
   return null;
 }
 
-export async function POST(request: NextRequest) {
-  const { error } = await requireAdmin();
-  if (error) return error;
+function getUploadRoot(): string {
+  return process.env.APP_ROOT || process.cwd();
+}
 
+/** Dossiers où écrire les uploads (LWS : Apache sert public_html/uploads). */
+function getUploadDirs(): string[] {
+  const root = getUploadRoot();
+  const dirs = [path.join(root, "public", "uploads")];
+
+  const publicHtmlUploads = path.join(root, "..", "public_html", "uploads");
   try {
+    const publicHtmlRoot = path.join(root, "..", "public_html");
+    if (fs.existsSync(publicHtmlRoot)) {
+      dirs.push(path.normalize(publicHtmlUploads));
+    }
+  } catch {
+    /* ignore */
+  }
+
+  const extra = process.env.UPLOAD_MIRROR_DIR?.trim();
+  if (extra) dirs.push(path.resolve(root, extra));
+
+  return [...new Set(dirs)];
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const { error } = await requireAdmin();
+    if (error) return error;
+
     const formData = await request.formData();
     const file = formData.get("file");
 
-    if (!file || !(file instanceof File)) {
+    if (!isUploadBlob(file)) {
       return NextResponse.json({ error: "Fichier requis" }, { status: 400 });
     }
 
-    if (!ALLOWED_TYPES.has(file.type)) {
-      return NextResponse.json(
-        { error: "Format non supporté. Utilisez JPG, PNG, WebP ou GIF." },
-        { status: 400 }
-      );
-    }
-
-    if (file.size > MAX_SIZE) {
+    const size = file.size ?? 0;
+    if (size > MAX_SIZE) {
       return NextResponse.json(
         { error: "Fichier trop volumineux (maximum 5 Mo)." },
         { status: 400 }
@@ -103,21 +132,29 @@ export async function POST(request: NextRequest) {
 
     if (!actualType || !ALLOWED_TYPES.has(actualType)) {
       return NextResponse.json(
-        { error: "Le contenu du fichier ne correspond pas à une image valide." },
+        { error: "Format non supporté. Utilisez JPG, PNG, WebP ou GIF." },
         { status: 400 }
       );
     }
 
     const ext = EXT_MAP[actualType] || "jpg";
     const filename = `${randomUUID()}.${ext}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
 
-    await mkdir(uploadDir, { recursive: true });
-    await writeFile(path.join(uploadDir, filename), buffer);
+    for (const uploadDir of getUploadDirs()) {
+      await mkdir(uploadDir, { recursive: true, mode: 0o777 });
+      await writeFile(path.join(uploadDir, filename), buffer, { mode: 0o666 });
+    }
 
     return NextResponse.json({ url: `/uploads/${filename}` });
   } catch (err) {
     console.error("Upload error:", err);
-    return NextResponse.json({ error: "Erreur lors de l'upload" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : "Erreur inconnue";
+    const code = err instanceof Error && "code" in err ? String(err.code) : "";
+    return NextResponse.json(
+      {
+        error: `Erreur upload: ${msg}${code ? ` (${code})` : ""}`,
+      },
+      { status: 500 }
+    );
   }
 }

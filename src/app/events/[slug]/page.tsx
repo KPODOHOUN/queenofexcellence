@@ -1,20 +1,17 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
-import { CandidateCard } from "@/components/candidates/CandidateCard";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { EventCategoryPanel } from "@/components/events/EventCategoryPanel";
 import { Reveal } from "@/components/ui/Reveal";
-import { prisma } from "@/lib/prisma";
+import { getEventPublicDetail, findEventBySlug } from "@/lib/db/models/events";
 import { safeQuery } from "@/lib/safe-db";
 import { getEventBlockReason } from "@/lib/events";
-import { formatDate, getEventStatusLabel } from "@/lib/utils";
+import { formatDate, getEventStatusLabel, formatCurrency } from "@/lib/utils";
 import Image from "next/image";
-
-export const dynamic = "force-dynamic";
-
-
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Calendar, MapPin, Clock } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -22,12 +19,13 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const event = await prisma.event.findUnique({ where: { slug } });
+  const event = await findEventBySlug(slug);
   if (!event) return { title: "Événement introuvable" };
+  const e = event as { name: string; shortDesc?: string; description: string; image?: string };
   return {
-    title: event.name,
-    description: event.shortDesc || event.description,
-    openGraph: { images: event.image ? [event.image] : [] },
+    title: e.name,
+    description: e.shortDesc || e.description,
+    openGraph: { images: e.image ? [e.image] : [] },
   };
 }
 
@@ -37,115 +35,88 @@ export default async function EventDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const event = await safeQuery(
-    "events.detail",
-    () =>
-      prisma.event.findUnique({
-        where: { slug, published: true },
-        include: {
-          candidates: {
-            where: { published: true, status: "APPROVED" },
-            orderBy: { number: "asc" },
-            include: { event: { select: { slug: true, name: true } } },
-          },
-          gallery: { where: { published: true }, orderBy: { order: "asc" } },
-          _count: { select: { candidates: true } },
-        },
-      }),
-    null
-  );
-
+  const event = await safeQuery("events.detail", () => getEventPublicDetail(slug), null);
   if (!event) notFound();
 
-  const blockReason = getEventBlockReason(event);
+  const e = event as unknown as {
+    name: string;
+    banner?: string | null;
+    image?: string | null;
+    status: string;
+    date: Date | string;
+    time?: string | null;
+    location: string;
+    presentation?: string | null;
+    description: string;
+    rules?: string | null;
+    votePrice: number;
+    slug: string;
+    categories: Parameters<typeof EventCategoryPanel>[0]["categories"];
+    uncategorizedCandidates?: Parameters<typeof EventCategoryPanel>[0]["uncategorizedCandidates"];
+    gallery: { id: string; imageUrl: string; title?: string | null }[];
+  };
+
+  const blockReason = getEventBlockReason(event as unknown as Parameters<typeof getEventBlockReason>[0]);
   const votingAllowed = !blockReason;
 
   return (
     <PublicLayout>
-      {/* Banner */}
       <section className="relative h-[50vh] min-h-[400px]">
-        {event.banner || event.image ? (
-          <Image
-            src={event.banner || event.image!}
-            alt={event.name}
-            fill
-            className="object-cover"
-            priority
-          />
+        {e.banner || e.image ? (
+          <Image src={e.banner || e.image!} alt={e.name} fill className="object-cover" priority />
         ) : (
           <div className="absolute inset-0 bg-champagne" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/20" />
         <div className="absolute bottom-0 left-0 right-0 p-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <span className="inline-block px-3 py-1 text-xs font-medium bg-white/90 rounded-full text-foreground mb-4">
-              {getEventStatusLabel(event.status)}
+            <span className="inline-block px-3 py-1 text-xs font-medium bg-white/95 rounded-full text-foreground mb-4">
+              {getEventStatusLabel(e.status)}
             </span>
-            <h1 className="font-serif text-4xl sm:text-5xl text-white mb-4">{event.name}</h1>
+            <h1 className="font-serif text-4xl sm:text-5xl text-white mb-4">{e.name}</h1>
             <div className="flex flex-wrap gap-6 text-sm text-white/80">
-              <span className="flex items-center gap-2">
-                <Calendar size={16} /> {formatDate(event.date)}
-              </span>
-              {event.time && (
-                <span className="flex items-center gap-2">
-                  <Clock size={16} /> {event.time}
-                </span>
-              )}
-              <span className="flex items-center gap-2">
-                <MapPin size={16} /> {event.location}
-              </span>
+              <span className="flex items-center gap-2"><Calendar size={16} /> {formatDate(e.date)}</span>
+              {e.time && <span className="flex items-center gap-2"><Clock size={16} /> {e.time}</span>}
+              <span className="flex items-center gap-2"><MapPin size={16} /> {e.location}</span>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="py-16">
+      <section className="py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             <div className="lg:col-span-2 space-y-12">
               <Reveal>
                 <h2 className="font-serif text-2xl mb-4">Présentation</h2>
-                <p className="text-muted leading-relaxed whitespace-pre-line">
-                  {event.presentation || event.description}
-                </p>
+                <p className="text-muted leading-relaxed whitespace-pre-line">{e.presentation || e.description}</p>
               </Reveal>
 
-              {event.rules && (
+              {e.rules && (
                 <Reveal>
                   <h2 className="font-serif text-2xl mb-4">Règlement</h2>
-                  <p className="text-muted leading-relaxed whitespace-pre-line">{event.rules}</p>
+                  <p className="text-muted leading-relaxed whitespace-pre-line">{e.rules}</p>
                 </Reveal>
               )}
 
-              {/* Candidates */}
               <Reveal>
-                <h2 className="font-serif text-2xl mb-6">
-                  Candidates ({event.candidates.length})
-                </h2>
-                {event.candidates.length === 0 ? (
-                  <EmptyState title="Aucune candidate disponible pour cet événement." />
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {event.candidates.map((candidate) => (
-                      <CandidateCard key={candidate.id} candidate={candidate} />
-                    ))}
-                  </div>
-                )}
+                <h2 className="font-serif text-2xl mb-6">Catégories & candidates</h2>
+                <EventCategoryPanel
+                  categories={e.categories}
+                  uncategorizedCandidates={e.uncategorizedCandidates}
+                  eventSlug={e.slug}
+                  votePrice={e.votePrice}
+                  votingAllowed={votingAllowed}
+                />
               </Reveal>
 
-              {/* Gallery */}
-              {event.gallery.length > 0 && (
+              {e.gallery.length > 0 && (
                 <Reveal>
                   <h2 className="font-serif text-2xl mb-6">Galerie</h2>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {event.gallery.map((item) => (
+                    {e.gallery.map((item) => (
                       <div key={item.id} className="group relative aspect-square rounded-xl overflow-hidden">
-                        <Image
-                          src={item.imageUrl}
-                          alt={item.title || ""}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
+                        <Image src={item.imageUrl} alt={item.title || ""} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                       </div>
                     ))}
                   </div>
@@ -156,34 +127,24 @@ export default async function EventDetailPage({
             <Reveal delay={150} className="space-y-6">
               {blockReason && (
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-sm text-amber-900">
-                  <p className="font-medium mb-1">Votes et billetterie suspendus</p>
+                  <p className="font-medium mb-1">Votes suspendus</p>
                   <p>{blockReason}</p>
                 </div>
               )}
-              <div className="p-6 border border-border rounded-2xl sticky top-24 transition-shadow duration-300 hover:shadow-lg hover:shadow-gold/10">
+              <div className="p-6 border border-border rounded-2xl sticky top-24 bg-white shadow-sm">
                 <p className="text-sm text-muted mb-2">Prix du vote</p>
-                <p className="font-serif text-3xl text-gold mb-6">
-                  {event.votePrice.toLocaleString("fr-FR")} FCFA
-                </p>
+                <p className="font-serif text-3xl text-gold mb-6">{formatCurrency(e.votePrice)}</p>
                 {votingAllowed ? (
                   <>
-                    <Link
-                      href={`/vote?event=${event.slug}`}
-                      className="block w-full text-center px-6 py-3 text-sm font-medium text-white gold-gradient rounded-full hover:opacity-90 transition-opacity"
-                    >
+                    <Link href={`/vote?event=${e.slug}`} className="block w-full text-center px-6 py-3 text-sm font-medium text-white gold-gradient rounded-full hover:opacity-90 transition-opacity">
                       Voter maintenant
                     </Link>
-                    <Link
-                      href={`/billetterie?event=${event.slug}`}
-                      className="block w-full text-center mt-3 px-6 py-3 text-sm font-medium text-foreground border border-border rounded-full hover:bg-champagne transition-colors"
-                    >
+                    <Link href={`/billetterie?event=${e.slug}`} className="block w-full text-center mt-3 px-6 py-3 text-sm font-medium text-foreground border border-border rounded-full hover:bg-champagne transition-colors">
                       Acheter un billet
                     </Link>
                   </>
                 ) : (
-                  <p className="text-sm text-muted text-center py-3">
-                    Les votes et achats sont temporairement indisponibles.
-                  </p>
+                  <p className="text-sm text-muted text-center py-3">Votes temporairement indisponibles.</p>
                 )}
               </div>
             </Reveal>

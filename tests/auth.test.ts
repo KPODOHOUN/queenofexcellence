@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { prisma } from "@/lib/prisma";
+import { findMany } from "@/lib/db/crud";
 import { verifyAdminCredentials } from "@/lib/admin-credentials";
 import { resetDb, createTestAdmin } from "./helpers";
 
@@ -23,7 +23,11 @@ describe("verifyAdminCredentials — verrouillage anti-brute-force", () => {
     const result = await verifyAdminCredentials("admin@test.com", "wrong-password");
 
     expect(result).toBeNull();
-    const attempts = await prisma.loginAttempt.findMany({ where: { email: "admin@test.com" } });
+    const attempts = await findMany<{ success: boolean }>(
+      "login_attempt",
+      "email = ?",
+      ["admin@test.com"]
+    );
     expect(attempts).toHaveLength(1);
     expect(attempts[0].success).toBe(false);
   });

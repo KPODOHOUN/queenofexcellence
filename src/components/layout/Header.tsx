@@ -8,44 +8,46 @@ import { SiteLogo } from "@/components/layout/SiteLogo";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { href: "/", label: "Accueil" },
-  { href: "/billetterie", label: "Billetterie" },
-  { href: "/galerie", label: "Galerie" },
-  { href: "/a-propos", label: "À propos" },
-  { href: "/contact", label: "Contact" },
+  { href: "/#a-propos", label: "À propos" },
+  { href: "/#evenements", label: "Événements" },
+  { href: "/#galerie", label: "Galerie" },
+  { href: "/#actualites", label: "Actualités" },
+  { href: "/#partenaires", label: "Partenaires" },
+  { href: "/#faq", label: "FAQ" },
 ];
 
 const moreLinks = [
-  { href: "/chiffres", label: "Chiffres" },
-  { href: "/projets", label: "Projets" },
-  { href: "/impact", label: "Impact" },
-  { href: "/faq", label: "FAQ" },
+  { href: "/contact", label: "Contact" },
+  { href: "/vote", label: "Voter" },
+  { href: "/billetterie", label: "Billetterie" },
+  { href: "/events", label: "Tous les événements" },
+  { href: "/galerie", label: "Galerie complète" },
 ];
 
 interface HeaderProps {
   transparent?: boolean;
+  floating?: boolean;
 }
 
-export function Header({ transparent = false }: HeaderProps) {
+export function Header({ transparent = false, floating = false }: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const pathname = usePathname();
   const moreRef = useRef<HTMLDivElement>(null);
 
-  const isTransparent = transparent && !scrolled;
-
-  const isMoreActive = moreLinks.some((l) => l.href === pathname);
+  const isHome = pathname === "/";
+  const useFloating = floating && isHome;
+  const isTransparent = transparent && !scrolled && isHome;
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileOpen(false);
     setMoreOpen(false);
   }, [pathname]);
@@ -71,14 +73,31 @@ export function Header({ transparent = false }: HeaderProps) {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-500 animate-fade-in",
-        isTransparent
-          ? "bg-transparent border-b border-transparent"
-          : "glass-dark border-b border-gold/15 shadow-lg shadow-black/30"
+        "z-50 transition-all duration-500",
+        useFloating
+          ? "fixed top-3 sm:top-4 left-3 right-3 sm:left-4 sm:right-4 lg:left-1/2 lg:right-auto lg:-translate-x-1/2 lg:max-w-5xl lg:w-[calc(100%-2rem)]"
+          : "fixed top-0 left-0 right-0 animate-fade-in"
       )}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-[72px] lg:h-20">
+      <div
+        className={cn(
+          "transition-all duration-500",
+          useFloating
+            ? cn(
+                "rounded-2xl border shadow-lg shadow-black/20 backdrop-blur-xl px-4 sm:px-6",
+                isTransparent
+                  ? "bg-black/35 border-white/10"
+                  : "bg-[#0c0c0c]/92 border-gold/15"
+              )
+            : cn(
+                "border-b",
+                isTransparent
+                  ? "bg-transparent border-transparent"
+                  : "glass-dark border-gold/15 shadow-lg shadow-black/30"
+              )
+        )}
+      >
+        <div className="flex items-center justify-between h-[56px] lg:h-[60px]">
           <Link href="/" className="shrink-0 group">
             <SiteLogo
               variant="header"
@@ -88,138 +107,82 @@ export function Header({ transparent = false }: HeaderProps) {
             />
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => {
-              const active = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "group/link relative px-3 py-2 text-[13px] tracking-wide rounded-lg overflow-hidden no-underline",
-                    active ? "text-gold" : "text-white/70 hover:text-gold-light"
-                  )}
-                >
-                  <span className="relative z-10 transition-colors duration-300">{link.label}</span>
-                  <span
-                    className={cn(
-                      "absolute bottom-1.5 left-3 right-3 h-px bg-gold origin-left transition-transform duration-300 ease-out",
-                      active ? "scale-x-100" : "scale-x-0 group-hover/link:scale-x-100"
-                    )}
-                  />
-                </Link>
-              );
-            })}
+          <nav className="hidden lg:flex items-center gap-0.5">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="group/link relative px-2.5 py-1.5 text-xs tracking-wide rounded-xl overflow-hidden no-underline text-white/70 hover:text-gold-light"
+              >
+                <span className="relative z-10">{link.label}</span>
+                <span className="absolute inset-0 scale-x-0 group-hover/link:scale-x-100 origin-left bg-white/5 rounded-xl transition-transform duration-300" />
+              </Link>
+            ))}
 
-            <div className="relative" ref={moreRef}>
+            <div className="relative ml-1" ref={moreRef}>
               <button
                 onClick={() => setMoreOpen((v) => !v)}
                 aria-expanded={moreOpen}
-                aria-haspopup="menu"
-                aria-controls="header-more-menu"
-                className={cn(
-                  "relative flex items-center gap-1 px-3 py-2 text-[13px] tracking-wide transition-colors duration-300 rounded-lg",
-                  isMoreActive ? "text-gold" : "text-white/70 hover:text-gold-light"
-                )}
+                className="flex items-center gap-1 px-3 py-2 text-[13px] tracking-wide rounded-xl text-white/70 hover:text-gold-light transition-colors"
               >
-                Découvrir
+                Plus
                 <ChevronDown size={14} className={cn("transition-transform duration-300", moreOpen && "rotate-180")} />
-                {isMoreActive && (
-                  <span className="absolute bottom-1.5 left-3 right-3 h-px bg-gold" />
-                )}
               </button>
               <div
-                id="header-more-menu"
-                role="menu"
-                aria-label="Découvrir"
                 className={cn(
-                  "absolute top-full right-0 mt-2 w-48 rounded-xl border border-gold/10 bg-[#141414] shadow-xl shadow-black/40 overflow-hidden transition-all duration-200 origin-top-right",
-                  moreOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-1 pointer-events-none"
+                  "absolute top-full right-0 mt-2 w-48 rounded-xl border border-gold/10 bg-[#141414] shadow-xl overflow-hidden transition-all duration-200 origin-top-right",
+                  moreOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
                 )}
               >
-                {moreLinks.map((link) => {
-                  const active = pathname === link.href;
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      role="menuitem"
-                      tabIndex={moreOpen ? 0 : -1}
-                      className={cn(
-                        "block px-4 py-2.5 text-[13px] transition-colors no-underline",
-                        active ? "text-gold bg-white/5" : "text-white/70 hover:text-gold-light hover:bg-white/5"
-                      )}
-                    >
-                      {link.label}
-                    </Link>
-                  );
-                })}
+                {moreLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="block px-4 py-2.5 text-[13px] text-white/70 hover:text-gold-light hover:bg-white/5 no-underline"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
               </div>
             </div>
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2">
             <Link
               href="/vote"
-              className="hidden sm:inline-flex items-center px-5 py-2.5 text-[13px] font-semibold rounded-full text-foreground gold-gradient btn-shimmer shadow-lg shadow-gold/20 transition-all duration-300 hover:shadow-gold/40 hover:-translate-y-0.5 active:translate-y-0 no-underline"
+              className="hidden sm:inline-flex items-center px-4 py-2 text-xs font-semibold rounded-full text-foreground gold-gradient btn-shimmer shadow-lg shadow-gold/20 transition-all duration-300 hover:shadow-gold/40 hover:-translate-y-0.5 no-underline"
             >
-              Voter maintenant
+              Voter
             </Link>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden p-2.5 rounded-lg text-gold hover:bg-white/5 transition-colors"
+              className="lg:hidden p-2.5 rounded-xl text-gold hover:bg-white/5 transition-colors"
               aria-label="Menu"
             >
-              <span className={cn("block transition-transform duration-300", mobileOpen && "rotate-90")}>
-                {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-              </span>
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 top-[72px] z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-500"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      {/* Mobile menu */}
-      <div
-        className={cn(
-          "lg:hidden relative z-50 grid transition-[grid-template-rows] duration-500 ease-in-out",
-          mobileOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-        )}
-      >
-        <div className="overflow-hidden">
-        <nav className="border-t border-gold/10 bg-[#0c0c0c]/95 backdrop-blur-xl px-4 py-4 flex flex-col gap-0.5 max-h-[70vh] overflow-y-auto">
-          {[...navLinks, ...moreLinks].map((link, i) => {
-            const active = pathname === link.href;
-            return (
+        {mobileOpen && (
+          <nav className="lg:hidden border-t border-white/10 py-3 flex flex-col gap-0.5 max-h-[70vh] overflow-y-auto">
+            {[...navLinks, ...moreLinks].map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                style={{ transitionDelay: mobileOpen ? `${i * 30}ms` : "0ms" }}
-                className={cn(
-                  "px-4 py-3.5 text-sm rounded-xl transition-all duration-300 no-underline",
-                  mobileOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2",
-                  active ? "text-gold bg-white/5" : "text-white/75 hover:text-gold-light hover:bg-white/5"
-                )}
+                className="px-3 py-3 text-sm rounded-xl text-white/75 hover:text-gold-light hover:bg-white/5 no-underline"
               >
                 {link.label}
               </Link>
-            );
-          })}
-          <Link
-            href="/vote"
-            className="mt-3 mx-2 text-center px-5 py-3.5 text-sm font-semibold rounded-full text-foreground gold-gradient transition-transform duration-300 active:scale-95 no-underline"
-          >
-            Voter maintenant
-          </Link>
-        </nav>
-        </div>
+            ))}
+            <Link
+              href="/vote"
+              className="mt-2 mx-1 text-center px-5 py-3 text-sm font-semibold rounded-full text-foreground gold-gradient no-underline"
+            >
+              Voter maintenant
+            </Link>
+          </nav>
+        )}
       </div>
     </header>
   );

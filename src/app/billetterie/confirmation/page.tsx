@@ -1,5 +1,5 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
-import { prisma } from "@/lib/prisma";
+import { getTicketOrderConfirmationByReference } from "@/lib/db/models/payments";
 import { confirmPayment } from "@/lib/payments";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,33 +17,32 @@ export default async function TicketConfirmationPage({
 }) {
   const { ref, status } = await searchParams;
 
-  let order = null;
+  let order: Awaited<ReturnType<typeof getTicketOrderConfirmationByReference>> = null;
   let verified = false;
 
   if (ref) {
-    const payment = await prisma.payment.findFirst({
-      where: { ticketOrder: { reference: ref } },
-    });
-    if (payment) {
-      const result = await confirmPayment(payment.reference).catch(() => null);
+    order = await getTicketOrderConfirmationByReference(ref);
+    const paymentRef = (order?.payment as { reference?: string } | null)?.reference;
+    if (paymentRef) {
+      const result = await confirmPayment(paymentRef).catch(() => null);
       verified = result?.verified === true || result?.alreadyPaid === true;
+      order = await getTicketOrderConfirmationByReference(ref);
     }
-
-    order = await prisma.ticketOrder.findUnique({
-      where: { reference: ref },
-      include: {
-        event: { select: { name: true, date: true, location: true } },
-        items: { include: { ticket: { select: { name: true } } } },
-        payment: { select: { status: true } },
-      },
-    });
   }
 
-  const isSuccess = order?.status === "PAID";
+  const o = order as {
+    status?: string;
+    event?: { name?: string };
+    qrCode?: string | null;
+    items?: { id: string; quantity: number; ticket?: { name?: string } }[];
+    payment?: { status?: string } | null;
+  } | null;
+
+  const isSuccess = o?.status === "PAID";
   const isCancelled =
     status === "cancelled" ||
-    order?.payment?.status === "CANCELLED" ||
-    order?.payment?.status === "FAILED";
+    o?.payment?.status === "CANCELLED" ||
+    o?.payment?.status === "FAILED";
 
   return (
     <PublicLayout>
@@ -58,14 +57,14 @@ export default async function TicketConfirmationPage({
                 Billet confirmé !
               </h1>
               <p className="text-muted mb-2">
-                Paiement validé par FeexPay — {order?.event.name}
+                Paiement validé par FeexPay — {o?.event?.name}
               </p>
               <p className="text-sm text-muted mb-6">Réf: {ref}</p>
 
-              {order?.qrCode && (
+              {o?.qrCode && (
                 <div className="mb-8 p-6 bg-white border border-border rounded-2xl inline-block">
                   <Image
-                    src={order.qrCode}
+                    src={o.qrCode}
                     alt="QR Code billet"
                     width={200}
                     height={200}
@@ -78,9 +77,9 @@ export default async function TicketConfirmationPage({
               )}
 
               <div className="text-left p-4 bg-champagne rounded-xl mb-8 text-sm">
-                {order?.items.map((item) => (
+                {o?.items?.map((item) => (
                   <p key={item.id}>
-                    {item.quantity}x {item.ticket.name}
+                    {item.quantity}x {item.ticket?.name}
                   </p>
                 ))}
               </div>

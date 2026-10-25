@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { displayVoteCount } from "@/lib/votes-display";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
@@ -65,7 +66,9 @@ export function CandidateCard({ candidate, className }: CandidateCardProps) {
 
         <div className="flex items-center justify-between pt-4 border-t border-border/80">
           <div>
-            <p className="font-serif text-2xl text-gold leading-none">{candidate.voteCount}</p>
+            <p className="font-serif text-2xl text-gold-dark tabular-nums leading-none">
+              {displayVoteCount(candidate.voteCount).toLocaleString("fr-FR")}
+            </p>
             <p className="text-[11px] text-muted mt-1 uppercase tracking-wider">votes</p>
           </div>
           <Link

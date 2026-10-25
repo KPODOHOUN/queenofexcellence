@@ -3,7 +3,8 @@ import { EventCard } from "@/components/events/EventCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
-import { prisma } from "@/lib/prisma";
+import { query } from "@/lib/db/connection";
+import { camelRows } from "@/lib/db/helpers";
 import { safeQuery } from "@/lib/safe-db";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
@@ -15,6 +16,38 @@ export const metadata: Metadata = {
   description: "Découvrez tous les événements et concours Queen of Excellence.",
 };
 
+async function findPublicEventsList(status?: string) {
+  let where = "e.published = 1 AND e.archived = 0";
+  const params: unknown[] = [];
+  if (status === "upcoming") {
+    where += " AND e.status = ?";
+    params.push("UPCOMING");
+  } else if (status === "ongoing") {
+    where += " AND e.status = ?";
+    params.push("ONGOING");
+  } else if (status === "completed") {
+    where += " AND e.status = ?";
+    params.push("COMPLETED");
+  }
+
+  const rows = await query(
+    `SELECT e.*,
+      (SELECT COUNT(*) FROM \`candidate\` c WHERE c.event_id = e.id) AS candidate_count
+     FROM \`event\` e
+     WHERE ${where}
+     ORDER BY e.date DESC`,
+    params
+  );
+
+  return camelRows<Record<string, unknown>>(rows).map((row) => {
+    const { candidateCount, ...rest } = row;
+    return {
+      ...rest,
+      _count: { candidates: Number(candidateCount ?? 0) },
+    };
+  });
+}
+
 export default async function EventsPage({
   searchParams,
 }: {
@@ -22,23 +55,9 @@ export default async function EventsPage({
 }) {
   const { status } = await searchParams;
 
-  const statusFilter =
-    status === "upcoming"
-      ? { status: "UPCOMING" as const }
-      : status === "ongoing"
-        ? { status: "ONGOING" as const }
-        : status === "completed"
-          ? { status: "COMPLETED" as const }
-          : {};
-
   const events = await safeQuery(
     "events.list",
-    () =>
-      prisma.event.findMany({
-        where: { published: true, archived: false, ...statusFilter },
-        orderBy: { date: "desc" },
-        include: { _count: { select: { candidates: true } } },
-      }),
+    () => findPublicEventsList(status),
     []
   );
 
@@ -82,11 +101,14 @@ export default async function EventsPage({
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
-              {events.map((event, i) => (
-                <Reveal key={event.id} delay={(i % 6) * 90}>
-                  <EventCard event={event} />
+              {events.map((event, i) => {
+                const e = event as Record<string, unknown>;
+                return (
+                <Reveal key={e.id as string} delay={(i % 6) * 90}>
+                  <EventCard event={event as Parameters<typeof EventCard>[0]["event"]} />
                 </Reveal>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

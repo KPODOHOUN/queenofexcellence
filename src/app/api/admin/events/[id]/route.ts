@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { deleteEvent, getEventAdminDetail, updateEvent } from "@/lib/db";
+import { dbErrorResponse, normalizeEventFields } from "@/lib/db/errors";
+import { syncEventCategories } from "@/lib/db/models/categories";
 import { requireAdmin } from "@/lib/admin-auth";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
@@ -21,6 +23,7 @@ const eventSchema = z.object({
   published: z.boolean().optional(),
   archived: z.boolean().optional(),
   blocked: z.boolean().optional(),
+  categories: z.array(z.string().min(1)).optional(),
 });
 
 export async function GET(
@@ -31,14 +34,7 @@ export async function GET(
   if (error) return error;
   const { id } = await params;
 
-  const event = await prisma.event.findUnique({
-    where: { id },
-    include: {
-      candidates: true,
-      tickets: true,
-      _count: { select: { votes: true, gallery: true } },
-    },
-  });
+  const event = await getEventAdminDetail(id);
   if (!event) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   return NextResponse.json(event);
 }
@@ -54,17 +50,22 @@ export async function PUT(
   try {
     const body = await request.json();
     const data = eventSchema.parse(body);
-    const updateData: Record<string, unknown> = { ...data };
-    if (data.date) updateData.date = new Date(data.date);
-    if (data.name && !data.slug) updateData.slug = slugify(data.name);
+    const { categories, ...rest } = data;
+    const updateData = normalizeEventFields({ ...rest });
+    if (rest.date) updateData.date = new Date(rest.date);
+    if (rest.name && !rest.slug) updateData.slug = slugify(rest.name);
 
-    const event = await prisma.event.update({ where: { id }, data: updateData });
+    await updateEvent(id, updateData);
+    if (categories) {
+      await syncEventCategories(id, categories);
+    }
+    const event = await getEventAdminDetail(id);
     return NextResponse.json(event);
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: err.issues }, { status: 400 });
     }
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    return dbErrorResponse(err, "Modification événement");
   }
 }
 
@@ -76,6 +77,6 @@ export async function DELETE(
   if (error) return error;
   const { id } = await params;
 
-  await prisma.event.delete({ where: { id } });
+  await deleteEvent(id);
   return NextResponse.json({ success: true });
 }

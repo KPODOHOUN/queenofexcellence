@@ -32,6 +32,7 @@
 
 html {
   scroll-behavior: smooth;
+  font-size: 15px;
 }
 
 body {
@@ -168,15 +169,15 @@ h1, h2, h3, h4, h5, h6 {
 .card-elevated {
   background: white;
   border: 1px solid var(--border);
-  border-radius: 1.25rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(244, 208, 63, 0.04);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(244, 208, 63, 0.04);
   transition: box-shadow 0.4s ease, transform 0.4s ease, border-color 0.4s ease;
 }
 
 .card-elevated:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 12px 40px rgba(244, 208, 63, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 8px 28px rgba(244, 208, 63, 0.1);
   border-color: rgba(244, 208, 63, 0.35);
-  transform: translateY(-4px);
+  transform: translateY(-2px);
 }
 
 .btn-shimmer {
@@ -221,12 +222,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .input-field {
-  padding: 0.875rem 1rem;
+  padding: 0.6875rem 0.875rem;
   border: 1px solid var(--border);
-  border-radius: 0.875rem;
+  border-radius: 0.75rem;
   background: white;
   color: var(--foreground);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
 }
 

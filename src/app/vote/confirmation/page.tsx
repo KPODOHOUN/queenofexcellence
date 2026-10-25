@@ -1,7 +1,8 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
-import { prisma } from "@/lib/prisma";
-import { confirmPayment } from "@/lib/payments";
+import { getPaymentConfirmationByReference } from "@/lib/db/models/payments";
+import { confirmPayment, confirmPaymentByTransaction } from "@/lib/payments";
 import Link from "next/link";
+import { AutoRefresh } from "@/components/ui/AutoRefresh";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -11,35 +12,43 @@ export const metadata: Metadata = { title: "Confirmation de vote" };
 export default async function VoteConfirmationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ref?: string; status?: string }>;
+  searchParams: Promise<{
+    ref?: string;
+    status?: string;
+    txn?: string;
+    transaction_id?: string;
+    transactionId?: string;
+  }>;
 }) {
-  const { ref, status } = await searchParams;
+  const params = await searchParams;
+  const { status } = params;
+  // KKiaPay (callback) peut ajouter « ?transaction_id=… » à une URL qui a déjà « ?ref=… ».
+  const [rawRef, glued] = (params.ref ?? "").split("?");
+  const ref = rawRef || undefined;
+  const gluedTxn = glued ? new URLSearchParams(glued).get("transaction_id") : null;
+  const txn = params.txn || params.transaction_id || params.transactionId || gluedTxn || undefined;
 
-  let payment = null;
+  let payment: Awaited<ReturnType<typeof getPaymentConfirmationByReference>> = null;
   let verified = false;
 
   if (ref) {
-    const result = await confirmPayment(ref).catch(() => null);
+    const result = txn
+      ? await confirmPaymentByTransaction(ref, txn).catch(() => null)
+      : await confirmPayment(ref).catch(() => null);
     verified = result?.verified === true || result?.alreadyPaid === true;
-
-    payment = await prisma.payment.findUnique({
-      where: { reference: ref },
-      include: {
-        vote: {
-          include: {
-            candidate: { select: { name: true, number: true } },
-            event: { select: { name: true } },
-          },
-        },
-      },
-    });
+    payment = await getPaymentConfirmationByReference(ref);
   }
 
-  const isSuccess = payment?.status === "PAID";
+  const p = payment as {
+    status?: string;
+    vote?: { voteCount?: number; candidate?: { name?: string } };
+  } | null;
+
+  const isSuccess = p?.status === "PAID";
   const isCancelled =
     status === "cancelled" ||
-    payment?.status === "CANCELLED" ||
-    payment?.status === "FAILED";
+    p?.status === "CANCELLED" ||
+    p?.status === "FAILED";
 
   return (
     <PublicLayout>
@@ -54,11 +63,11 @@ export default async function VoteConfirmationPage({
                 Vote confirmé !
               </h1>
               <p className="text-muted mb-2">
-                Paiement validé par FeexPay. Merci pour votre soutien à{" "}
-                <strong>{payment?.vote?.candidate.name}</strong>
+                Paiement validé par KKiaPay. Merci pour votre soutien à{" "}
+                <strong>{p?.vote?.candidate?.name}</strong>
               </p>
               <p className="text-sm text-muted mb-8">
-                {payment?.vote?.voteCount} vote(s) — Réf: {ref}
+                {p?.vote?.voteCount} vote(s) — Réf: {ref}
               </p>
             </>
           ) : isCancelled ? (
@@ -77,13 +86,16 @@ export default async function VoteConfirmationPage({
                 Vérification en cours
               </h1>
               <p className="text-muted mb-4">
-                Nous attendons la confirmation de FeexPay. Les votes ne sont
+                Nous attendons la confirmation de KKiaPay. Les votes ne sont
                 comptabilisés qu&apos;après validation du paiement.
               </p>
               {ref && !verified && (
-                <p className="text-xs text-muted mb-8">
-                  Référence : {ref} — actualisez cette page dans quelques instants.
-                </p>
+                <>
+                  <p className="text-xs text-muted mb-8">
+                    Référence : {ref} — vérification automatique en cours, ne fermez pas cette page.
+                  </p>
+                  <AutoRefresh intervalMs={5000} maxAttempts={24} />
+                </>
               )}
             </>
           )}

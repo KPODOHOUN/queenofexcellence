@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { createRow } from "@/lib/db";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { z } from "zod";
 
@@ -19,9 +19,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = contactSchema.parse(body);
 
-    const message = await prisma.contactMessage.create({ data });
+    const message = await createRow("contact_message", data);
 
-    return NextResponse.json({ success: true, id: message.id });
+    return NextResponse.json({ success: true, id: (message as { id: string }).id });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

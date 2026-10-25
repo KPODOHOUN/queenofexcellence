@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { findPublicCandidates } from "@/lib/db";
 import { safeQuery } from "@/lib/safe-db";
 
 export async function GET(request: NextRequest) {
   const eventId = request.nextUrl.searchParams.get("eventId");
   const eventSlug = request.nextUrl.searchParams.get("eventSlug");
+  const categoryId = request.nextUrl.searchParams.get("categoryId");
 
   if (!eventId && !eventSlug) {
     return NextResponse.json({ error: "eventId requis" }, { status: 400 });
@@ -12,25 +13,7 @@ export async function GET(request: NextRequest) {
 
   const candidates = await safeQuery(
     "api.candidates",
-    () =>
-      prisma.candidate.findMany({
-        where: {
-          published: true,
-          status: "APPROVED",
-          ...(eventId
-            ? { eventId }
-            : { event: { slug: eventSlug!, published: true } }),
-        },
-        orderBy: { number: "asc" },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          number: true,
-          photo: true,
-          voteCount: true,
-        },
-      }),
+    () => findPublicCandidates(eventId, eventSlug, categoryId),
     []
   );
 

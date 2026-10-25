@@ -8,8 +8,8 @@ const voteSchema = z.object({
   candidateId: z.string(),
   voteCount: z.number().min(1).max(100),
   voterName: z.string().min(2),
-  voterEmail: z.string().email(),
-  voterPhone: z.string().optional(),
+  voterEmail: z.string().email().optional().or(z.literal("")),
+  voterPhone: z.string().min(8),
 });
 
 export async function POST(request: NextRequest) {

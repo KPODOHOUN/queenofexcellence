@@ -44,15 +44,15 @@ export function EventCard({ event, className }: EventCardProps) {
         </span>
       </div>
 
-      <div className="p-6 lg:p-7">
-        <h3 className="font-serif text-xl lg:text-[1.35rem] text-foreground mb-2.5 group-hover:text-gold transition-colors duration-300 leading-snug">
+      <div className="p-5 lg:p-6">
+        <h3 className="font-serif text-lg lg:text-xl text-foreground mb-2 group-hover:text-gold transition-colors duration-300 leading-snug">
           {event.name}
         </h3>
-        <p className="text-sm text-muted line-clamp-2 mb-5 leading-relaxed">
+        <p className="text-sm text-muted line-clamp-2 mb-4 leading-relaxed">
           {event.shortDesc || event.description}
         </p>
 
-        <div className="flex flex-col gap-2.5 text-[13px] text-muted mb-6 pb-6 border-b border-border/80">
+        <div className="flex flex-col gap-2 text-xs text-muted mb-4 pb-4 border-b border-border/80">
           <span className="flex items-center gap-2.5">
             <Calendar size={14} className="text-gold shrink-0" />
             {formatDate(event.date)}

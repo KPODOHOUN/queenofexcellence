@@ -4,7 +4,7 @@ import { SocialLinksBar } from "@/components/layout/SocialLinks";
 import { Reveal } from "@/components/ui/Reveal";
 import { getSocialLinks } from "@/lib/social";
 import { getSiteContent } from "@/lib/data";
-import { fallbackContact } from "@/lib/content-fallback";
+import { emptyContact } from "@/lib/content-fallback";
 import {
   Mail,
   Phone,
@@ -27,12 +27,6 @@ export const metadata: Metadata = {
 
 const quickLinks = [
   {
-    icon: Handshake,
-    title: "Devenir partenaire",
-    desc: "Associez votre marque à l'excellence féminine.",
-    href: "/contact",
-  },
-  {
     icon: MessageCircle,
     title: "Support vote & billetterie",
     desc: "Une question sur votre achat ou votre vote ?",
@@ -44,6 +38,12 @@ const quickLinks = [
     desc: "Consultez notre FAQ avant d'écrire.",
     href: "/faq",
   },
+  {
+    icon: Handshake,
+    title: "Nos partenaires",
+    desc: "Découvrez les organisations qui nous accompagnent.",
+    href: "/#partenaires",
+  },
 ];
 
 export default async function ContactPage() {
@@ -53,10 +53,10 @@ export default async function ContactPage() {
   ]);
 
   const data = {
-    email: (contact as { email?: string } | null)?.email || fallbackContact.email,
-    phone: (contact as { phone?: string } | null)?.phone || fallbackContact.phone,
-    address: (contact as { address?: string } | null)?.address || fallbackContact.address,
-    hours: fallbackContact.hours,
+    email: (contact as { email?: string } | null)?.email || emptyContact.email,
+    phone: (contact as { phone?: string } | null)?.phone || emptyContact.phone,
+    address: (contact as { address?: string } | null)?.address || emptyContact.address,
+    hours: (contact as { hours?: string } | null)?.hours || emptyContact.hours,
   };
 
   const contactCards = [
@@ -75,14 +75,14 @@ export default async function ContactPage() {
         <div className="absolute top-1/3 right-0 w-[500px] h-[400px] rounded-full bg-gold/8 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[300px] h-[300px] rounded-full bg-gold/5 blur-[100px] pointer-events-none" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <Reveal blur>
               <div className="flex items-center gap-3 mb-6">
                 <span className="h-px w-8 bg-gold/50" />
                 <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium">Contact</p>
               </div>
-              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-white leading-[1.08] tracking-tight mb-6">
+              <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.08] tracking-tight mb-5">
                 Parlons de votre
                 <span className="block gold-gradient-text">prochain projet</span>
               </h1>
@@ -132,7 +132,7 @@ export default async function ContactPage() {
       </section>
 
       {/* Liens rapides */}
-      <section className="py-16 lg:py-20 bg-champagne relative overflow-hidden">
+      <section className="py-12 lg:py-16 bg-champagne relative overflow-hidden">
         <div className="absolute inset-0 section-pattern opacity-40 pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal className="text-center mb-12">

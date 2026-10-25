@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { deleteRow, updateRow } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { z } from "zod";
 
@@ -24,7 +24,7 @@ export async function PUT(
   try {
     const body = await request.json();
     const data = schema.parse(body);
-    const item = await prisma.impact.update({ where: { id }, data });
+    const item = await updateRow("impact", id, data);
     return NextResponse.json(item);
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -42,6 +42,6 @@ export async function DELETE(
   if (error) return error;
   const { id } = await params;
 
-  await prisma.impact.delete({ where: { id } });
+  await deleteRow("impact", id);
   return NextResponse.json({ success: true });
 }

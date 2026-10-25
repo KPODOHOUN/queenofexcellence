@@ -5,7 +5,7 @@ import { AdminCrudPage } from "@/components/admin/AdminCrudPage";
 export default function AdminProjectsPage() {
   return (
     <AdminCrudPage
-      title="Projets"
+      title="Actualités"
       apiPath="/api/admin/projects"
       fields={[
         { key: "title", label: "Titre" },

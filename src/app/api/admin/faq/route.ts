@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { createRow, listPaged } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getPagination, paginatedResponse } from "@/lib/pagination";
 import { z } from "zod";
@@ -15,10 +15,7 @@ export async function GET(request: NextRequest) {
   const { error } = await requireAdmin();
   if (error) return error;
   const { page, pageSize, skip, take } = getPagination(request);
-  const [faqs, total] = await prisma.$transaction([
-    prisma.fAQ.findMany({ orderBy: { order: "asc" }, skip, take }),
-    prisma.fAQ.count(),
-  ]);
+  const { items: faqs, total } = await listPaged("faq", "`order` ASC", skip, take);
   return NextResponse.json(paginatedResponse(faqs, total, page, pageSize));
 }
 
@@ -29,7 +26,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const data = schema.parse(body);
-    const faq = await prisma.fAQ.create({ data });
+    const faq = await createRow("faq", data);
     return NextResponse.json(faq, { status: 201 });
   } catch (err) {
     if (err instanceof z.ZodError) {

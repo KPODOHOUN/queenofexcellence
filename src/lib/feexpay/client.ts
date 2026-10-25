@@ -237,12 +237,9 @@ class FeexPayClient {
   private async resolveFeexPayReference(
     ourReference: string
   ): Promise<string | null> {
-    const { prisma } = await import("@/lib/prisma");
-    const payment = await prisma.payment.findUnique({
-      where: { reference: ourReference },
-      select: { fispayRef: true },
-    });
-    return payment?.fispayRef || ourReference;
+    const { findPaymentByReference } = await import("@/lib/db/models/payments");
+    const payment = await findPaymentByReference(ourReference);
+    return (payment?.fispayRef as string | undefined) || ourReference;
   }
 
   private sandboxInitiate(

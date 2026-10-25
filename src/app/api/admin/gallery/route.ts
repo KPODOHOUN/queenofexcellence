@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { createGalleryItem, findGalleryAdminList } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getPagination, paginatedResponse } from "@/lib/pagination";
 import { z } from "zod";
@@ -21,18 +21,7 @@ export async function GET(request: NextRequest) {
   if (error) return error;
 
   const { page, pageSize, skip, take } = getPagination(request);
-  const [items, total] = await prisma.$transaction([
-    prisma.galleryItem.findMany({
-      orderBy: { order: "asc" },
-      include: {
-        event: { select: { name: true } },
-        candidate: { select: { name: true } },
-      },
-      skip,
-      take,
-    }),
-    prisma.galleryItem.count(),
-  ]);
+  const { items, total } = await findGalleryAdminList(skip, take);
   return NextResponse.json(paginatedResponse(items, total, page, pageSize));
 }
 
@@ -43,7 +32,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const data = schema.parse(body);
-    const item = await prisma.galleryItem.create({ data });
+    const item = await createGalleryItem(data);
     return NextResponse.json(item, { status: 201 });
   } catch (err) {
     if (err instanceof z.ZodError) {

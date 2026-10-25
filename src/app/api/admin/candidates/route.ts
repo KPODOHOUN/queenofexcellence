@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { createCandidate, findCandidatesAdminList } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { slugify } from "@/lib/utils";
 import { getPagination, paginatedResponse } from "@/lib/pagination";
@@ -17,6 +17,7 @@ const candidateSchema = z.object({
   country: z.string().optional(),
   extraInfo: z.string().optional(),
   status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
+  categoryId: z.string().optional(),
   published: z.boolean().optional(),
 });
 
@@ -25,18 +26,12 @@ export async function GET(request: NextRequest) {
   if (error) return error;
 
   const eventId = request.nextUrl.searchParams.get("eventId");
-  const where = eventId ? { eventId } : undefined;
   const { page, pageSize, skip, take } = getPagination(request);
-  const [candidates, total] = await prisma.$transaction([
-    prisma.candidate.findMany({
-      where,
-      include: { event: { select: { name: true, slug: true } } },
-      orderBy: [{ eventId: "asc" }, { number: "asc" }],
-      skip,
-      take,
-    }),
-    prisma.candidate.count({ where }),
-  ]);
+  const { items: candidates, total } = await findCandidatesAdminList(
+    skip,
+    take,
+    eventId
+  );
   return NextResponse.json(paginatedResponse(candidates, total, page, pageSize));
 }
 
@@ -49,8 +44,10 @@ export async function POST(request: NextRequest) {
     const data = candidateSchema.parse(body);
     const slug = data.slug || slugify(data.name);
 
-    const candidate = await prisma.candidate.create({
-      data: { ...data, slug, status: data.status || "PENDING" },
+    const candidate = await createCandidate({
+      ...data,
+      slug,
+      status: data.status || "PENDING",
     });
     return NextResponse.json(candidate, { status: 201 });
   } catch (err) {

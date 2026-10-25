@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { normalizeSocialUrl } from "@/lib/social";
 import type { SocialLinks } from "@/types/social";
 
 const icons = {
@@ -45,9 +46,9 @@ interface SocialLinksProps {
 }
 
 export function SocialLinksBar({ links, variant = "footer", size = "md", className }: SocialLinksProps) {
-  const active = (Object.entries(links) as [keyof SocialLinks, string][]).filter(
-    ([, url]) => url.trim().length > 0
-  );
+  const active = (Object.entries(links) as [keyof SocialLinks, string][])
+    .map(([key, url]) => [key, normalizeSocialUrl(url)] as const)
+    .filter(([, url]) => url.length > 0);
 
   if (active.length === 0) {
     if (variant === "header") return null;

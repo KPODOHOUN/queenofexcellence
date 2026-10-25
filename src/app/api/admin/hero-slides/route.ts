@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { createRow, listPaged } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getPagination, paginatedResponse } from "@/lib/pagination";
 import { z } from "zod";
@@ -22,14 +22,12 @@ export async function GET(request: NextRequest) {
   if (error) return error;
 
   const { page, pageSize, skip, take } = getPagination(request);
-  const [slides, total] = await prisma.$transaction([
-    prisma.heroSlide.findMany({
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      skip,
-      take,
-    }),
-    prisma.heroSlide.count(),
-  ]);
+  const { items: slides, total } = await listPaged(
+    "hero_slide",
+    "`order` ASC, created_at DESC",
+    skip,
+    take
+  );
   return NextResponse.json(paginatedResponse(slides, total, page, pageSize));
 }
 
@@ -41,7 +39,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = heroSlideSchema.parse(body);
 
-    const slide = await prisma.heroSlide.create({ data });
+    const slide = await createRow("hero_slide", data);
     return NextResponse.json(slide, { status: 201 });
   } catch (err) {
     if (err instanceof z.ZodError) {

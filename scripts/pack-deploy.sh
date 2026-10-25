@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-#  DÉPLOIEMENT SIMPLE LWS — à lancer sur TON PC
+#  DÉPLOIEMENT LWS — à lancer sur TON PC
 #  Usage : npm run deploy:pack
 # ============================================================
 set -euo pipefail
@@ -14,59 +14,43 @@ echo "║   Queen of Excellence — Préparation deploy   ║"
 echo "╚══════════════════════════════════════════════╝"
 echo ""
 
-# Charger .env.local si présent, sinon SQLite par défaut
-if [ -f .env.local ]; then
-  set -a
-  # shellcheck disable=SC1091
-  source .env.local
-  set +a
-  echo "✓ Variables chargées depuis .env.local"
-fi
-
-export DATABASE_URL="${DATABASE_URL:-file:./data.db}"
-echo "→ Base de données : $DATABASE_URL"
-
-echo "→ Installation des dépendances (incl. build)..."
-npm install --no-audit --no-fund
+echo "→ Tests votes (camelKeys)..."
+npx vitest run tests/db-helpers.test.ts
 
 echo "→ Build Next.js (1–3 min sur ton PC)..."
 NODE_ENV=production npm run build
+
+echo "→ Vérification fix votes dans le build..."
+if ! grep -rl 'r\.has(n)?i:0!==(a=i)' .next/server/chunks --include='*.js' 2>/dev/null | grep -v '\.map' | grep -q .; then
+  echo "❌ Le build ne contient pas le fix vote_count/number (camelKeys)."
+  echo "   Vérifiez src/lib/db/helpers.ts puis relancez npm run deploy:pack"
+  exit 1
+fi
+echo "  ✓ camelKeys OK"
 
 echo "→ Préparation du dossier release/..."
 rm -rf release queenofex-deploy.zip
 mkdir -p release
 
-# Fichiers nécessaires sur le serveur (PAS de build sur LWS)
-cp -R .next public prisma release/
+cp -R .next public database deploy release/
+mkdir -p release/public/uploads
+touch release/public/uploads/.gitkeep
+# Cache et artefacts dev inutiles en production (~1 Go en moins)
+rm -rf release/.next/dev release/.next/cache release/.next/diagnostics release/.next/trace 2>/dev/null || true
 cp package.json package-lock.json next.config.ts server.js release/
+mkdir -p release/src/lib
+cp src/lib/image-loader.ts release/src/lib/image-loader.ts
+cp deploy/LISEZMOI.txt release/LISEZMOI.txt
+cp deploy/lws-boot.sh release/lws-boot.sh
+cp deploy/fix-apache-500.sh release/fix-apache-500.sh
+cp deploy/apply-migrations.sh release/apply-migrations.sh
+cp deploy/fix-uploads.sh release/fix-uploads.sh
+cp deploy/check-kkiapay.sh release/check-kkiapay.sh
+cp deploy/install-deps.sh release/install-deps.sh
 cp scripts/server-install.sh release/install.sh
+mkdir -p release/scripts
+cp scripts/diagnose-db.js release/scripts/diagnose-db.js
 chmod +x release/install.sh
-
-# Guide rapide inclus dans le zip
-cat > release/LISEZMOI.txt << 'EOF'
-DÉPLOIEMENT LWS — 4 ÉTAPES
-==========================
-
-1. UPLOAD
-   - Extraire ce zip dans public_html/ (via Gestionnaire de fichiers cPanel)
-
-2. VARIABLES (cPanel → Variables d'environnement)
-   DATABASE_URL = file:./data.db
-   AUTH_SECRET  = (openssl rand -base64 32)
-   NEXTAUTH_URL = https://queenofexcellence.com
-   NODE_ENV     = production
-
-3. INSTALLATION (cPanel → Terminal)
-   cd ~/public_html
-   bash install.sh
-
-4. NODE.JS APP (cPanel → Setup Node.js App)
-   - Racine : public_html
-   - Commande : node server.js
-   - Cliquer "Restart"
-
-C'est tout ! Pas besoin de GitHub.
-EOF
 
 echo "→ Création de queenofex-deploy.zip..."
 (cd release && zip -r -q ../queenofex-deploy.zip .)
@@ -79,9 +63,10 @@ echo "╚═══════════════════════�
 echo ""
 echo "  Fichier : queenofex-deploy.zip ($SIZE)"
 echo ""
-echo "  Prochaines étapes :"
-echo "  1. cPanel LWS → Gestionnaire de fichiers → public_html"
-echo "  2. Upload queenofex-deploy.zip → Extraire"
-echo "  3. cPanel → Terminal → cd public_html && bash install.sh"
-echo "  4. cPanel → Setup Node.js App → node server.js → Restart"
+echo "  Sur le serveur LWS :"
+echo "    1. Node.js → ARRÊTER"
+echo "    2. Uploader queenofex-deploy.zip dans ~/"
+echo "    3. cd ~ && unzip -o queenofex-deploy.zip -d ~/queenofex"
+echo "    4. bash ~/queenofex/install.sh"
+echo "    5. Node.js → DÉMARRER + Purger Fastest Cache"
 echo ""

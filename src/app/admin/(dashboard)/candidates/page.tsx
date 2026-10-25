@@ -15,6 +15,7 @@ interface Event {
 interface Candidate {
   id: string;
   eventId: string;
+  categoryId?: string | null;
   slug: string;
   name: string;
   number: number;
@@ -30,8 +31,10 @@ interface Candidate {
 
 const emptyForm = {
   eventId: "",
+  categoryId: "",
   name: "",
   number: 1,
+  voteCount: 0,
   bio: "",
   city: "",
   country: "",
@@ -61,10 +64,21 @@ export default function AdminCandidatesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     fetch("/api/admin/events?pageSize=200").then((r) => r.json()).then((d) => setEvents(d.items));
   }, []);
+
+  useEffect(() => {
+    if (!form.eventId) {
+      setCategories([]);
+      return;
+    }
+    fetch(`/api/public/categories?eventId=${form.eventId}`)
+      .then((r) => r.json())
+      .then((data) => setCategories(Array.isArray(data) ? data : []));
+  }, [form.eventId]);
 
   useEffect(() => {
     fetch(`/api/admin/candidates?page=${page}`)
@@ -80,8 +94,10 @@ export default function AdminCandidatesPage() {
     setEditingId(candidate.id);
     setForm({
       eventId: candidate.eventId,
+      categoryId: candidate.categoryId || "",
       name: candidate.name,
       number: candidate.number,
+      voteCount: candidate.voteCount ?? 0,
       bio: candidate.bio || "",
       city: candidate.city || "",
       country: candidate.country || "",
@@ -105,7 +121,11 @@ export default function AdminCandidatesPage() {
       {
         method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          categoryId: form.categoryId || undefined,
+          ...(editingId ? { voteCount: form.voteCount } : {}),
+        }),
       }
     );
     if (res.ok) {
@@ -158,9 +178,13 @@ export default function AdminCandidatesPage() {
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <select value={form.eventId} onChange={(e) => setForm({ ...form, eventId: e.target.value })} required className="px-3 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all">
+            <select value={form.eventId} onChange={(e) => setForm({ ...form, eventId: e.target.value, categoryId: "" })} required className="px-3 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all">
               <option value="">Événement</option>
               {events.map((ev) => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
+            </select>
+            <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} className="px-3 py-2 border border-border rounded-lg bg-white outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" disabled={!form.eventId || categories.length === 0}>
+              <option value="">Catégorie (optionnel)</option>
+              {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
             </select>
             <input placeholder="Nom" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="px-3 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
             <input
@@ -179,6 +203,24 @@ export default function AdminCandidatesPage() {
               required
               className="px-3 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all"
             />
+            {editingId && (
+              <input
+                type="number"
+                min={0}
+                placeholder="Nombre de votes"
+                value={form.voteCount}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw === "") {
+                    setForm({ ...form, voteCount: 0 });
+                    return;
+                  }
+                  const parsed = parseInt(raw, 10);
+                  if (!Number.isNaN(parsed) && parsed >= 0) setForm({ ...form, voteCount: parsed });
+                }}
+                className="px-3 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all"
+              />
+            )}
             <input placeholder="Ville" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="px-3 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
             <input placeholder="Pays" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className="px-3 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all" />
             <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="px-3 py-2 border border-border rounded-lg bg-white outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all">

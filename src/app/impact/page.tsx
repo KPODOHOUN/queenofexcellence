@@ -2,7 +2,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
-import { prisma } from "@/lib/prisma";
+import { findMany } from "@/lib/db/crud";
 import { safeQuery } from "@/lib/safe-db";
 import type { Metadata } from "next";
 
@@ -16,11 +16,7 @@ export const metadata: Metadata = {
 export default async function ImpactPage() {
   const impacts = await safeQuery(
     "impact.list",
-    () =>
-      prisma.impact.findMany({
-        where: { published: true },
-        orderBy: { order: "asc" },
-      }),
+    () => findMany("impact", "published = 1", [], "`order` ASC"),
     []
   );
 
@@ -37,26 +33,29 @@ export default async function ImpactPage() {
           {impacts.length === 0 ? (
             <EmptyState title="Aucune information d'impact disponible pour le moment." />
           ) : (
-            impacts.map((item, i) => (
-              <Reveal key={item.id} delay={Math.min(i, 6) * 70}>
+            impacts.map((item, i) => {
+              const impact = item as { id: string; value?: string; title: string; description: string };
+              return (
+              <Reveal key={impact.id} delay={Math.min(i, 6) * 70}>
                 <div className="group flex items-baseline gap-6 lg:gap-10 py-8 border-t border-border first:border-t-0 transition-transform duration-300 hover:translate-x-1">
                   <span className="font-serif text-sm text-gold/50 shrink-0 w-6">
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  {item.value && (
+                  {impact.value && (
                     <span className="font-serif text-3xl lg:text-5xl text-gold shrink-0 w-24 lg:w-32">
-                      {item.value}
+                      {impact.value}
                     </span>
                   )}
                   <div>
                     <h3 className="font-serif text-xl text-foreground mb-2 group-hover:text-gold-dark transition-colors">
-                      {item.title}
+                      {impact.title}
                     </h3>
-                    <p className="text-muted leading-relaxed">{item.description}</p>
+                    <p className="text-muted leading-relaxed">{impact.description}</p>
                   </div>
                 </div>
               </Reveal>
-            ))
+              );
+            })
           )}
         </div>
       </section>

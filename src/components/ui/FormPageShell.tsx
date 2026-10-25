@@ -22,7 +22,7 @@ export function FormPageShell({
     <>
       <section
         className={cn(
-          "relative py-20 lg:py-28 overflow-hidden",
+          "relative py-14 lg:py-20 overflow-hidden",
           dark ? "bg-[#0a0a0a]" : "bg-champagne"
         )}
       >
@@ -45,7 +45,7 @@ export function FormPageShell({
             <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium">{eyebrow}</p>
             <span className={cn("h-px w-8", dark ? "bg-gold/50" : "bg-gold/60")} />
           </div>
-          <h1 className="font-serif text-4xl sm:text-5xl lg:text-[3.25rem] leading-tight tracking-tight">
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-[2.5rem] leading-tight tracking-tight">
             {title}
           </h1>
           {description && (
@@ -56,7 +56,7 @@ export function FormPageShell({
         </Reveal>
       </section>
 
-      <section className={cn("py-12 lg:py-20 pb-24 bg-white", className)}>
+      <section className={cn("py-10 lg:py-16 pb-20 bg-white", className)}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
       </section>
     </>

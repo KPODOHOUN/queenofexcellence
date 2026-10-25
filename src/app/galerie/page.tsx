@@ -2,7 +2,8 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
-import { prisma } from "@/lib/prisma";
+import { query } from "@/lib/db/connection";
+import { camelKeys } from "@/lib/db/helpers";
 import { safeQuery } from "@/lib/safe-db";
 import Image from "next/image";
 import type { Metadata } from "next";
@@ -15,19 +16,35 @@ export const metadata: Metadata = {
   description: "Moments d'excellence capturés lors de nos événements.",
 };
 
-export default async function GaleriePage() {
-  const items = await safeQuery(
-    "gallery.list",
-    () =>
-      prisma.galleryItem.findMany({
-        where: { published: true },
-        orderBy: { order: "asc" },
-        include: { event: { select: { name: true } } },
-      }),
-    []
+async function findPublishedGalleryItems() {
+  const rows = await query(
+    `SELECT g.*, e.name AS event_name
+     FROM \`gallery_item\` g
+     LEFT JOIN \`event\` e ON e.id = g.event_id
+     WHERE g.published = 1
+     ORDER BY g.\`order\` ASC`
   );
 
-  const categories = [...new Set(items.map((i) => i.category).filter(Boolean))];
+  return rows.map((row) => {
+    const item = camelKeys(row)! as Record<string, unknown>;
+    const { eventName, ...rest } = item;
+    return {
+      ...rest,
+      event: eventName ? { name: eventName as string } : null,
+    };
+  });
+}
+
+export default async function GaleriePage() {
+  const items = await safeQuery("gallery.list", () => findPublishedGalleryItems(), []);
+
+  const categories = [
+    ...new Set(
+      items
+        .map((i) => (i as Record<string, unknown>).category as string | null | undefined)
+        .filter(Boolean)
+    ),
+  ] as string[];
 
   return (
     <PublicLayout>
@@ -46,29 +63,37 @@ export default async function GaleriePage() {
               {categories.length > 0 && (
                 <div className="flex flex-wrap gap-2 justify-center mb-12">
                   {categories.map((cat) => (
-                    <span key={cat} className="px-4 py-1.5 text-xs bg-champagne rounded-full text-muted transition-colors hover:bg-gold-light/40">
-                      {cat}
+                    <span key={cat as string} className="px-4 py-1.5 text-xs bg-champagne rounded-full text-muted transition-colors hover:bg-gold-light/40">
+                      {cat as string}
                     </span>
                   ))}
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {items.map((item, i) => (
-                  <Reveal key={item.id} delay={(i % 6) * 80} className="group relative aspect-[4/3] rounded-2xl overflow-hidden">
+                {items.map((item, i) => {
+                  const g = item as {
+                    id: string;
+                    imageUrl: string;
+                    title?: string | null;
+                    event?: { name: string } | null;
+                  };
+                  return (
+                  <Reveal key={g.id} delay={(i % 6) * 80} className="group relative aspect-[4/3] rounded-2xl overflow-hidden">
                     <Image
-                      src={item.imageUrl}
-                      alt={item.title || "Galerie"}
+                      src={g.imageUrl}
+                      alt={g.title || "Galerie"}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    {(item.title || item.event) && (
+                    {(g.title || g.event) && (
                       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
-                        {item.title && <p className="text-white text-sm font-medium">{item.title}</p>}
-                        {item.event && <p className="text-white/70 text-xs">{item.event.name}</p>}
+                        {g.title && <p className="text-white text-sm font-medium">{g.title}</p>}
+                        {g.event && <p className="text-white/70 text-xs">{g.event.name}</p>}
                       </div>
                     )}
                   </Reveal>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}

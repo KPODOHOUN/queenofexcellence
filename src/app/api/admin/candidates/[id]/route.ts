@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { deleteCandidate, updateCandidate } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
@@ -15,7 +15,9 @@ const candidateSchema = z.object({
   country: z.string().optional().nullable(),
   extraInfo: z.string().optional().nullable(),
   status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
+  categoryId: z.string().optional().nullable(),
   published: z.boolean().optional(),
+  voteCount: z.number().int().min(0).optional(),
 });
 
 export async function PUT(
@@ -32,10 +34,7 @@ export async function PUT(
     const updateData: Record<string, unknown> = { ...data };
     if (data.name && !data.slug) updateData.slug = slugify(data.name);
 
-    const candidate = await prisma.candidate.update({
-      where: { id },
-      data: updateData,
-    });
+    const candidate = await updateCandidate(id, updateData);
     return NextResponse.json(candidate);
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -53,6 +52,6 @@ export async function DELETE(
   if (error) return error;
   const { id } = await params;
 
-  await prisma.candidate.delete({ where: { id } });
+  await deleteCandidate(id);
   return NextResponse.json({ success: true });
 }

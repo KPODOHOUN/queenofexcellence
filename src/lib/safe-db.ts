@@ -1,4 +1,6 @@
-import { isDatabaseConfigured } from "@/lib/prisma";
+import { isDatabaseConfigured } from "@/lib/db/connection";
+
+export { isDatabaseConfigured };
 
 export async function safeQuery<T>(
   label: string,

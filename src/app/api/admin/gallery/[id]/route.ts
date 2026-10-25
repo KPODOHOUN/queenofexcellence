@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { deleteGalleryItem, updateGalleryItem } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { z } from "zod";
 
@@ -26,7 +26,7 @@ export async function PUT(
   try {
     const body = await request.json();
     const data = schema.parse(body);
-    const item = await prisma.galleryItem.update({ where: { id }, data });
+    const item = await updateGalleryItem(id, data);
     return NextResponse.json(item);
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -44,6 +44,6 @@ export async function DELETE(
   if (error) return error;
   const { id } = await params;
 
-  await prisma.galleryItem.delete({ where: { id } });
+  await deleteGalleryItem(id);
   return NextResponse.json({ success: true });
 }

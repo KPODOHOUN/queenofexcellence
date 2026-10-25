@@ -4,37 +4,29 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build --webpack",
+    "build": "next build",
     "start": "node server.js",
-    "lint": "eslint",
-    "postinstall": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma db push",
-    "db:seed": "prisma db seed",
-    "db:reset": "prisma migrate reset",
-    "db:studio": "prisma studio",
-    "db:push": "prisma db push",
-    "db:local": "docker compose up -d && sleep 3 && npm run db:push && npm run db:seed",
+    "dev:ready": "bash scripts/start-local-mysql.sh && node scripts/setup-local-db.js && next dev",
+    "db:start": "bash scripts/start-local-mysql.sh",
+    "db:setup": "node scripts/setup-local-db.js",
+    "db:seed": "node scripts/seed-mysql.js",
     "deploy:pack": "bash scripts/pack-deploy.sh",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "engines": {
-    "node": ">=18.0.0"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "node": ">=20.9.0"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
-    "@prisma/client": "^5.22.0",
+    "@kkiapay-org/nodejs-sdk": "^1.0.7",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "lucide-react": "^1.35.0",
+    "mysql2": "^3.14.0",
     "next": "16.3.3",
     "next-auth": "^5.0.0-beta.32",
-    "prisma": "^5.22.0",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { createTicket, findTicketsAdminList } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getPagination, paginatedResponse } from "@/lib/pagination";
 import { z } from "zod";
@@ -18,18 +18,8 @@ export async function GET(request: NextRequest) {
   if (error) return error;
 
   const eventId = request.nextUrl.searchParams.get("eventId");
-  const where = eventId ? { eventId } : undefined;
   const { page, pageSize, skip, take } = getPagination(request);
-  const [tickets, total] = await prisma.$transaction([
-    prisma.ticket.findMany({
-      where,
-      include: { event: { select: { name: true } } },
-      orderBy: { price: "asc" },
-      skip,
-      take,
-    }),
-    prisma.ticket.count({ where }),
-  ]);
+  const { items: tickets, total } = await findTicketsAdminList(skip, take, eventId);
   return NextResponse.json(paginatedResponse(tickets, total, page, pageSize));
 }
 
@@ -40,7 +30,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const data = ticketSchema.parse(body);
-    const ticket = await prisma.ticket.create({ data });
+    const ticket = await createTicket(data);
     return NextResponse.json(ticket, { status: 201 });
   } catch (err) {
     if (err instanceof z.ZodError) {

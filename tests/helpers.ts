@@ -1,16 +1,24 @@
-import { prisma } from "@/lib/prisma";
+import { execute } from "@/lib/db/connection";
+import { createRow } from "@/lib/db/crud";
 import bcrypt from "bcryptjs";
 
 export async function resetDb() {
-  await prisma.loginAttempt.deleteMany();
-  await prisma.vote.deleteMany();
-  await prisma.ticketOrderItem.deleteMany();
-  await prisma.ticketOrder.deleteMany();
-  await prisma.payment.deleteMany();
-  await prisma.ticket.deleteMany();
-  await prisma.candidate.deleteMany();
-  await prisma.event.deleteMany();
-  await prisma.admin.deleteMany();
+  await execute("SET FOREIGN_KEY_CHECKS = 0");
+  const tables = [
+    "login_attempt",
+    "vote",
+    "ticket_order_item",
+    "ticket_order",
+    "payment",
+    "ticket",
+    "candidate",
+    "event",
+    "admin",
+  ];
+  for (const table of tables) {
+    await execute(`DELETE FROM \`${table}\``);
+  }
+  await execute("SET FOREIGN_KEY_CHECKS = 1");
 }
 
 let eventCounter = 0;
@@ -24,18 +32,16 @@ export async function createTestEvent(overrides: Partial<{
   votePrice: number;
 }> = {}) {
   eventCounter += 1;
-  return prisma.event.create({
-    data: {
-      name: `Test Event ${eventCounter}`,
-      slug: `test-event-${eventCounter}-${Date.now()}`,
-      description: "Un événement de test avec une description suffisamment longue.",
-      date: new Date(),
-      location: "Cotonou",
-      votePrice: overrides.votePrice ?? 100,
-      published: overrides.published ?? true,
-      archived: overrides.archived ?? false,
-      blocked: overrides.blocked ?? false,
-    },
+  return createRow("event", {
+    name: `Test Event ${eventCounter}`,
+    slug: `test-event-${eventCounter}-${Date.now()}`,
+    description: "Un événement de test avec une description suffisamment longue.",
+    date: new Date(),
+    location: "Cotonou",
+    votePrice: overrides.votePrice ?? 100,
+    published: overrides.published ?? true,
+    archived: overrides.archived ?? false,
+    blocked: overrides.blocked ?? false,
   });
 }
 
@@ -44,15 +50,13 @@ export async function createTestCandidate(
   overrides: Partial<{ published: boolean; status: string }> = {}
 ) {
   candidateCounter += 1;
-  return prisma.candidate.create({
-    data: {
-      eventId,
-      name: `Candidate ${candidateCounter}`,
-      slug: `candidate-${candidateCounter}-${Date.now()}`,
-      number: candidateCounter,
-      published: overrides.published ?? true,
-      status: overrides.status ?? "APPROVED",
-    },
+  return createRow("candidate", {
+    eventId,
+    name: `Candidate ${candidateCounter}`,
+    slug: `candidate-${candidateCounter}-${Date.now()}`,
+    number: candidateCounter,
+    published: overrides.published ?? true,
+    status: overrides.status ?? "APPROVED",
   });
 }
 
@@ -61,24 +65,20 @@ export async function createTestTicket(
   overrides: Partial<{ price: number; quantity: number; sold: number; active: boolean }> = {}
 ) {
   ticketCounter += 1;
-  return prisma.ticket.create({
-    data: {
-      eventId,
-      name: `Ticket ${ticketCounter}`,
-      price: overrides.price ?? 1000,
-      quantity: overrides.quantity ?? 100,
-      sold: overrides.sold ?? 0,
-      active: overrides.active ?? true,
-    },
+  return createRow("ticket", {
+    eventId,
+    name: `Ticket ${ticketCounter}`,
+    price: overrides.price ?? 1000,
+    quantity: overrides.quantity ?? 100,
+    sold: overrides.sold ?? 0,
+    active: overrides.active ?? true,
   });
 }
 
 export async function createTestAdmin(email: string, password: string) {
-  return prisma.admin.create({
-    data: {
-      email,
-      name: "Admin de test",
-      passwordHash: await bcrypt.hash(password, 10),
-    },
+  return createRow("admin", {
+    email,
+    name: "Admin de test",
+    passwordHash: await bcrypt.hash(password, 10),
   });
 }

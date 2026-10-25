@@ -15,9 +15,8 @@ const exploreLinks = [
 
 const aboutLinks = [
   { href: "/a-propos", label: "À propos" },
+  { href: "/actualites", label: "Actualités" },
   { href: "/chiffres", label: "Chiffres clés" },
-  { href: "/projets", label: "Projets" },
-  { href: "/impact", label: "Impact" },
   { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
 ];
@@ -31,7 +30,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h4 className="text-[11px] font-medium tracking-[0.2em] uppercase text-gold/80 mb-5">
+      <h4 className="text-[10px] font-medium tracking-[0.2em] uppercase text-gold/80 mb-4">
         {title}
       </h4>
       <ul className="space-y-2.5">
@@ -81,8 +80,8 @@ export async function Footer() {
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none section-pattern" />
 
       <div className="relative border-t border-white/[0.08]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-6">
             {/* Marque */}
             <div className="lg:col-span-4">
               <Link href="/" className="inline-block group no-underline">
@@ -114,7 +113,7 @@ export async function Footer() {
 
             {/* Contact */}
             <div className="lg:col-span-3">
-              <h4 className="text-[11px] font-medium tracking-[0.2em] uppercase text-gold/80 mb-5">
+              <h4 className="text-[10px] font-medium tracking-[0.2em] uppercase text-gold/80 mb-4">
                 Contact
               </h4>
               <ul className="space-y-4">
@@ -163,7 +162,7 @@ export async function Footer() {
             </div>
           </div>
 
-          <div className="mt-12 pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px] text-white/30 tracking-wide">
+          <div className="mt-8 pt-5 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[10px] text-white/30 tracking-wide">
             <p>&copy; {new Date().getFullYear()} Queen of Excellence</p>
             <p className="text-gold/40 tracking-[0.25em] uppercase text-[10px]">
               Intelligence · Culture · Innovation

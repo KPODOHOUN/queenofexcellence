@@ -11,7 +11,7 @@ interface PageHeroProps {
 
 export function PageHero({ eyebrow, title, description, className, children }: PageHeroProps) {
   return (
-    <section className={cn("relative py-20 lg:py-28 bg-champagne overflow-hidden", className)}>
+    <section className={cn("relative py-14 lg:py-20 bg-champagne overflow-hidden", className)}>
       <div className="absolute inset-0 section-pattern opacity-60" />
       <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-gold/10 blur-[80px] pointer-events-none animate-float" />
       <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-gold/5 blur-[60px] pointer-events-none" />
@@ -24,11 +24,11 @@ export function PageHero({ eyebrow, title, description, className, children }: P
             <span className="h-px w-8 bg-gold/60" />
           </div>
         )}
-        <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-foreground leading-tight tracking-tight">
+        <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-foreground leading-tight tracking-tight">
           {title}
         </h1>
         {description && (
-          <p className="mt-5 text-muted text-[15px] leading-relaxed max-w-xl mx-auto">{description}</p>
+          <p className="mt-4 text-muted text-sm leading-relaxed max-w-xl mx-auto">{description}</p>
         )}
         {children && <div className="mt-8">{children}</div>}
       </Reveal>

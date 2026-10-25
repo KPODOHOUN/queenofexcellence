@@ -1,0 +1,167 @@
+DÉPLOIEMENT LWS — Queen of Excellence (MySQL + KKiaPay)
+=========================================================
+
+Ce zip contient le site DÉJÀ COMPILÉ (.next). Pas de build sur le serveur.
+
+────────────────────────────────────────────────
+1. BASE DE DONNÉES (cPanel → phpMyAdmin)
+────────────────────────────────────────────────
+   Importer dans l'ordre :
+   - database/schema.mysql.sql
+   - database/seed.mysql.sql        (admin uniquement, contenus vides)
+   - database/migrations/add-event-categories.sql  (si pas déjà dans schema)
+
+   Admin initial :
+   Email        : admin@queenofexcellence.com
+   Mot de passe : admin123
+   → Changez le mot de passe après la 1ère connexion.
+
+   Tout le contenu (slides, événements, candidates, partenaires, FAQ…)
+   s'ajoute depuis : https://queenofexcellence.com/admin
+
+────────────────────────────────────────────────
+2. UPLOAD DES FICHIERS
+────────────────────────────────────────────────
+   Extraire TOUT ce zip dans :
+   ~/queenofex
+   (PAS dans public_html — Passenger pointe vers ~/queenofex)
+
+   REDÉPLOIEMENT (site déjà en ligne) :
+   1. cPanel → Node.js → ARRÊTER l'app
+   2. Sauvegarder public/uploads/ (images admin) si besoin
+   3. Extraire le zip PAR-DESSUS l'ancien dossier :
+      cd ~ && unzip -o queenofex-deploy.zip -d ~/queenofex
+      (ne supprime PAS public/uploads si déjà présent)
+   4. bash ~/queenofex/install.sh
+   5. Node.js → DÉMARRER (attendre 2 min après ARRÊTER)
+   6. Fastest Cache → Purger le cache
+   7. NE PAS patcher manuellement les fichiers .next/server/chunks/
+
+   Test votes après deploy :
+   https://queenofexcellence.com/api/public/candidates?eventSlug=gala-ifsio
+   → voteCount et number doivent être des NOMBRES (0, 1, 2…), pas true/false
+
+────────────────────────────────────────────────
+3. PASSENGER (.htaccess)
+────────────────────────────────────────────────
+   IMPORTANT — ne copiez PAS un .htaccess avec un chemin Node en dur.
+
+   Méthode recommandée :
+   1. cPanel → Setup Node.js App
+   2. Créer / modifier l'app :
+      - Racine     : queenofexcellence
+      - URL        : queenofexcellence.com
+      - Fichier    : server.js
+      - Node.js    : 18 ou 20 (selon disponible)
+   3. Enregistrer → cPanel génère automatiquement le bon .htaccess
+      dans public_html avec le chemin Node correct.
+
+   Si vous devez copier manuellement, récupérez d'abord le chemin Node
+   affiché en haut de Setup Node.js App (commande "source .../activate")
+   ou dans le terminal :
+   find ~/nodevenv ~/nodeenv -name node -type f 2>/dev/null
+
+────────────────────────────────────────────────
+4. VARIABLES (cPanel → Setup Node.js App)
+────────────────────────────────────────────────
+   Racine        : queenofexcellence
+   URL           : queenofexcellence.com
+   Démarrage     : server.js
+   Mode          : Production
+   Node.js       : 18 ou 20
+
+   Variables obligatoires :
+
+   DATABASE_URL
+   mysql://c2852916c_queenofex_user:VOTRE_MDP@localhost:3306/c2852916c_queenofexcellence
+   (@ dans le mot de passe → %40)
+
+   Utilisateur MySQL : c2852916c_queenofex_user
+   Base MySQL        : c2852916c_queenofexcellence
+   (L'utilisateur doit avoir TOUS LES PRIVILÈGES sur cette base — voir Assistant MySQL étape 3)
+
+   AUTH_SECRET
+   (secret long aléatoire)
+
+   NEXTAUTH_URL
+   https://queenofexcellence.com
+
+   AUTH_TRUST_HOST
+   true
+
+   NODE_ENV
+   production
+
+   NODE_OPTIONS
+   --max-old-space-size=512
+
+   KKiaPay (paiements RÉELS — clés depuis dashboard.kkiapay.me) :
+
+   KKIAPAY_PUBLIC_KEY
+   KKIAPAY_PRIVATE_KEY
+   KKIAPAY_SECRET
+   KKIAPAY_WEBHOOK_SECRET
+   KKIAPAY_SANDBOX
+   false
+
+   Webhook KKiaPay à configurer :
+   https://queenofexcellence.com/api/payments/webhook
+
+   Vérifier la connexion base de données (navigateur) :
+   https://queenofexcellence.com/api/health/db
+   Réponse attendue : {"ok":true,"database":{"connected":true,...}}
+   Optionnel : HEALTH_CHECK_KEY dans .env puis ?key=VOTRE_CLE
+
+────────────────────────────────────────────────
+5. INSTALLATION (Terminal cPanel)
+────────────────────────────────────────────────
+   cd ~/queenofexcellence
+   bash install.sh
+
+────────────────────────────────────────────────
+6. DÉMARRAGE
+────────────────────────────────────────────────
+   Setup Node.js App → ARRÊTER → 2 min → REDÉMARRER
+   NE PAS lancer node server.js manuellement en boucle.
+
+   Site  : https://queenofexcellence.com
+   Admin : https://queenofexcellence.com/admin/login
+
+────────────────────────────────────────────────
+7. CHECKLIST CONTENU (dashboard admin)
+────────────────────────────────────────────────
+   [ ] Slides hero (3 images) — Admin → Slides hero
+   [ ] À propos — Admin → Contenu
+   [ ] Événement(s) statut EN COURS — Admin → Événements
+   [ ] Catégories + candidates — Admin → Événements / Candidates
+   [ ] Partenaires (logos) — Admin → Partenaires
+   [ ] Galerie — Admin → Galerie
+   [ ] Actualités — Admin → Actualités
+   [ ] FAQ — Admin → FAQ
+   [ ] Contact — Admin → Contenu
+
+────────────────────────────────────────────────
+8. LOGS / ERREUR PASSENGER (« Web application could not be started »)
+────────────────────────────────────────────────
+   Terminal cPanel :
+   tail -80 ~/logs/passenger.log
+
+   Test manuel (affiche l'erreur exacte) :
+   source /home/c2852916c/nodevenv/queenofexcellence/18/bin/activate
+   cd ~/queenofexcellence
+   node server.js
+
+   Causes fréquentes :
+   - Dossier .next absent ou incomplet → re-uploader le zip
+   - Node 18 au lieu de 20 → Setup Node.js App → version 20
+   - .htaccess : PassengerNodejs doit pointer vers /20/bin/node
+   - .env mal formé (@ du mot de passe → %40 dans DATABASE_URL)
+   - node_modules manquant → bash install.sh
+
+   Vérifier la base (navigateur, après deploy) :
+   https://queenofexcellence.com/api/health/db
+
+────────────────────────────────────────────────
+9. LOGS
+────────────────────────────────────────────────
+   tail -50 ~/logs/passenger.log

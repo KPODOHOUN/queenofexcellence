@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { findByField, getTicketOrderForVerify, validateTicketOrder } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   const ref = request.nextUrl.searchParams.get("ref");
@@ -7,13 +7,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Référence manquante" }, { status: 400 });
   }
 
-  const order = await prisma.ticketOrder.findUnique({
-    where: { reference: ref },
-    include: {
-      event: { select: { name: true, date: true, location: true } },
-      items: { include: { ticket: { select: { name: true } } } },
-    },
-  });
+  const order = await getTicketOrderForVerify(ref);
 
   if (!order) {
     return NextResponse.json({ error: "Billet introuvable" }, { status: 404 });
@@ -23,12 +17,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ valid: false, status: order.status });
   }
 
+  const event = order.event as { name: string } | null;
+
   return NextResponse.json({
     valid: true,
-    reference: order.reference,
-    event: order.event.name,
-    customer: order.customerName,
-    status: order.status,
+    reference: order.reference as string,
+    event: event?.name,
+    customer: order.customerName as string,
+    status: order.status as string,
     validatedAt: order.validatedAt,
   });
 }
@@ -36,9 +32,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { reference } = await request.json();
-    const order = await prisma.ticketOrder.findUnique({
-      where: { reference },
-    });
+    const order = await findByField<{ id: string; status: string }>(
+      "ticket_order",
+      "reference",
+      reference
+    );
 
     if (!order) {
       return NextResponse.json({ error: "Billet introuvable" }, { status: 404 });
@@ -52,15 +50,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const updated = await prisma.ticketOrder.update({
-      where: { id: order.id },
-      data: { status: "VALIDATED", validatedAt: new Date() },
-    });
+    const updated = await validateTicketOrder(order.id);
 
     return NextResponse.json({
       valid: true,
       message: "Billet validé avec succès",
-      validatedAt: updated.validatedAt,
+      validatedAt: (updated as { validatedAt?: Date } | null)?.validatedAt,
     });
   } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
