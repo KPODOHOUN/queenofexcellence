@@ -57,3 +57,8 @@ queenofex-*.zip
 deploy/lws-boot.sh
 deploy/apply-migrations.sh
 deploy/final-fix.sh
+
+# Tous les fichiers d'environnement (sauf l'exemple)
+.env.*
+!.env.example
+!.env.development
