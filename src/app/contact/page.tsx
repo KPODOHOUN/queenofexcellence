@@ -69,7 +69,7 @@ export default async function ContactPage() {
   return (
     <PublicLayout>
       {/* Hero sombre premium */}
-      <section className="relative pt-[72px] lg:pt-20 overflow-hidden bg-[#080808]">
+      <section className="relative pt-[72px] lg:pt-20 overflow-hidden bg-onyx">
         <div className="absolute inset-0 section-pattern opacity-[0.03]" />
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
         <div className="absolute top-1/3 right-0 w-[500px] h-[400px] rounded-full bg-gold/8 blur-[120px] pointer-events-none" />

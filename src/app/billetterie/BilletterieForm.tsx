@@ -118,6 +118,7 @@ export default function BilletterieForm() {
       {events.length === 0 ? (
         <Reveal>
           <EmptyState
+              className="card-elevated gold-ring max-w-2xl mx-auto"
             title="Aucun événement disponible à la billetterie."
             description="Les places seront bientôt en vente. Restez connectés."
             action={{ label: "Nous contacter", href: "/contact" }}
@@ -199,7 +200,7 @@ export default function BilletterieForm() {
 
               {total > 0 && (
                 <>
-                  <div className="p-5 rounded-2xl bg-[#0c0c0c] text-center gold-ring">
+                  <div className="p-5 rounded-2xl bg-onyx text-center gold-ring">
                     <p className="text-xs text-white/50 tracking-wider uppercase mb-1">Total</p>
                     <p className="font-serif text-4xl gold-gradient-text">{formatCurrency(total)}</p>
                   </div>

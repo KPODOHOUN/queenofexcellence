@@ -7,6 +7,7 @@ import { getEventBlockReason } from "@/lib/events";
 import { formatDate, getEventStatusLabel, formatCurrency } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
+import { AttendButton } from "@/components/events/AttendButton";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Calendar, MapPin, Clock } from "lucide-react";
@@ -39,6 +40,8 @@ export default async function EventDetailPage({
   if (!event) notFound();
 
   const e = event as unknown as {
+    id: string;
+    attendanceFrame?: string | null;
     name: string;
     banner?: string | null;
     image?: string | null;
@@ -102,6 +105,7 @@ export default async function EventDetailPage({
               <Reveal>
                 <h2 className="font-serif text-2xl mb-6">Catégories & candidates</h2>
                 <EventCategoryPanel
+                  eventId={votingAllowed ? e.id : undefined}
                   categories={e.categories}
                   uncategorizedCandidates={e.uncategorizedCandidates}
                   eventSlug={e.slug}
@@ -133,18 +137,27 @@ export default async function EventDetailPage({
               )}
               <div className="p-6 border border-border rounded-2xl sticky top-24 bg-white shadow-sm">
                 <p className="text-sm text-muted mb-2">Prix du vote</p>
-                <p className="font-serif text-3xl text-gold mb-6">{formatCurrency(e.votePrice)}</p>
+                <p className="text-3xl font-bold text-foreground mb-6">{formatCurrency(e.votePrice)}</p>
                 {votingAllowed ? (
                   <>
-                    <Link href={`/vote?event=${e.slug}`} className="block w-full text-center px-6 py-3 text-sm font-medium text-white gold-gradient rounded-full hover:opacity-90 transition-opacity">
+                    <Link href={`/vote?event=${e.slug}`} className="btn-gold w-full no-underline">
                       Voter maintenant
                     </Link>
-                    <Link href={`/billetterie?event=${e.slug}`} className="block w-full text-center mt-3 px-6 py-3 text-sm font-medium text-foreground border border-border rounded-full hover:bg-champagne transition-colors">
+                    <Link href={`/billetterie?event=${e.slug}`} className="btn-soft w-full mt-3 no-underline">
                       Acheter un billet
                     </Link>
                   </>
                 ) : (
                   <p className="text-sm text-muted text-center py-3">Votes temporairement indisponibles.</p>
+                )}
+                {e.status !== "COMPLETED" && (
+                  <AttendButton
+                    eventId={e.id}
+                    eventName={e.name}
+                    eventSlug={e.slug}
+                    frameUrl={e.attendanceFrame}
+                    className="mt-6 pt-6 border-t border-border"
+                  />
                 )}
               </div>
             </Reveal>

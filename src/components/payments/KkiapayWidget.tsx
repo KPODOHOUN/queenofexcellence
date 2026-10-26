@@ -144,7 +144,7 @@ export function useKkiapayPayment({
       partnerId: config.reference,
       data: config.reference,
       position: "center",
-      theme: "#F4D03F",
+      theme: "#C9A45C",
       name,
       email,
       phone,

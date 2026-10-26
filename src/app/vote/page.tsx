@@ -1,12 +1,16 @@
 import { Suspense } from "react";
-import Script from "next/script";
 import { PublicLayout } from "@/components/layout/PublicLayout";
+import { PageHero } from "@/components/ui/PageHero";
 import VoteForm from "./VoteForm";
 
 export default function VotePage() {
   return (
     <PublicLayout>
-      <Script src="https://cdn.kkiapay.me/k.js" strategy="beforeInteractive" />
+      <PageHero
+        title="Voter"
+        description="Choisissez une candidate, indiquez le nombre de votes, puis payez."
+        className="[&>div]:max-w-5xl [&>div]:!pb-4"
+      />
       <Suspense fallback={<div className="py-32 text-center text-muted">Chargement...</div>}>
         <VoteForm />
       </Suspense>

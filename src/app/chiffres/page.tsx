@@ -31,7 +31,7 @@ export default async function ChiffresPage() {
         description="Des données calculées en temps réel depuis notre plateforme."
       />
 
-      <section className="py-14 lg:py-20 bg-[#0c0c0c] relative overflow-hidden">
+      <section className="py-14 lg:py-20 bg-onyx relative overflow-hidden">
         <div className="absolute inset-0 section-pattern opacity-[0.04] pointer-events-none" />
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

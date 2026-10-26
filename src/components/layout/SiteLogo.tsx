@@ -10,8 +10,8 @@ interface SiteLogoProps {
 }
 
 const sizeMap = {
-  header: "h-8 w-8 lg:h-9 lg:w-9",
-  footer: "h-14 w-14",
+  header: "h-9 w-9 lg:h-11 lg:w-11",
+  footer: "h-16 w-16",
   admin: "h-11 w-11",
 };
 
@@ -35,14 +35,14 @@ export function SiteLogo({
       {showText && (
         <span
           className={cn(
-            "font-serif leading-tight transition-colors duration-300",
-            variant === "footer" ? "text-lg tracking-tight" : "text-base lg:text-lg",
+            "font-serif leading-none whitespace-nowrap transition-colors duration-300",
+            variant === "footer" ? "text-xl" : "text-[19px] lg:text-xl font-semibold tracking-tight",
             transparent ? "text-white" : "text-foreground",
             textClassName
           )}
         >
           Queen of{" "}
-          <span className={cn(transparent ? "text-gold" : "gold-gradient-text")}>
+          <span>
             Excellence
           </span>
         </span>

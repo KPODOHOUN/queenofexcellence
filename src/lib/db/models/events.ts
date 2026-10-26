@@ -41,9 +41,20 @@ export async function findEventsAdminList(
     ),
     countTable("event"),
   ]);
-  const items = camelRows<EventRow>(rows).map((row) =>
-    withCounts(stripCountFields(row))
-  );
+  // Présences « J'y serai » : table optionnelle (migration add-event-attendance.sql).
+  const attendance = new Map<string, number>();
+  try {
+    const counts = await query<RowDataPacket>(
+      `SELECT event_id, COUNT(*) AS c FROM \`event_attendance\` GROUP BY event_id`
+    );
+    for (const r of counts) attendance.set(String(r.event_id), Number(r.c));
+  } catch {
+    // table absente : on affiche 0
+  }
+  const items = camelRows<EventRow>(rows).map((row) => {
+    const item = withCounts(stripCountFields(row));
+    return { ...item, _count: { ...item._count, attendance: attendance.get(String(row.id)) ?? 0 } };
+  });
   return { items, total };
 }
 

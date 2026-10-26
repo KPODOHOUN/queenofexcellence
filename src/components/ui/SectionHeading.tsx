@@ -1,5 +1,5 @@
+import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Reveal } from "@/components/ui/Reveal";
 
 interface SectionHeadingProps {
   eyebrow?: string;
@@ -7,37 +7,47 @@ interface SectionHeadingProps {
   description?: string;
   align?: "left" | "center";
   className?: string;
+  dark?: boolean;
+  /** Lien « Voir tout » aligné à droite. */
+  action?: { label: string; href: string };
 }
 
 export function SectionHeading({
   eyebrow,
   title,
   description,
-  align = "center",
+  align = "left",
   className,
+  dark = false,
+  action,
 }: SectionHeadingProps) {
   return (
-    <Reveal blur className={cn("mb-10", align === "center" ? "text-center mx-auto max-w-2xl" : "max-w-xl", className)}>
-      {eyebrow && (
-        <div
+    <div
+      className={cn(
+        "mb-4 lg:mb-6 flex items-end justify-between gap-4",
+        align === "center" && "flex-col items-center text-center",
+        className
+      )}
+    >
+      <div className={cn(align === "center" && "max-w-2xl")}>
+        {eyebrow && <div className={cn("eyebrow", dark && "!text-gold")}>{eyebrow}</div>}
+        <h2
           className={cn(
-            "flex items-center gap-3 mb-4",
-            align === "center" && "justify-center"
+            "text-2xl lg:text-[28px] leading-tight",
+            dark ? "text-white" : "text-foreground"
           )}
         >
-          <span className="h-px w-8 bg-gold/60" />
-          <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium">
-            {eyebrow}
-          </p>
-          <span className="h-px w-8 bg-gold/60" />
-        </div>
+          {title}
+        </h2>
+        {description && (
+          <p className={cn("mt-1 text-[15px] leading-6", dark ? "text-white/70" : "text-muted")}>{description}</p>
+        )}
+      </div>
+      {action && (
+        <Link href={action.href} className="link-lux shrink-0 no-underline">
+          {action.label}
+        </Link>
       )}
-      <h2 className="font-serif text-2xl sm:text-3xl lg:text-[2.125rem] text-foreground leading-tight tracking-tight">
-        {title}
-      </h2>
-      {description && (
-        <p className="mt-3 text-muted leading-relaxed text-sm">{description}</p>
-      )}
-    </Reveal>
+    </div>
   );
 }

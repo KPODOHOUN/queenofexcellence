@@ -11,6 +11,7 @@ const eventSchema = z.object({
   slug: z.string().optional(),
   image: z.string().optional().nullable(),
   banner: z.string().optional().nullable(),
+  attendanceFrame: z.string().optional().nullable(),
   description: z.string().min(10).optional(),
   shortDesc: z.string().optional().nullable(),
   date: z.string().optional(),

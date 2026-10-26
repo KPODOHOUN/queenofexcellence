@@ -123,7 +123,8 @@ export default function AdminCandidatesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          categoryId: form.categoryId || undefined,
+          // En édition, null retire la catégorie (événement sans catégorie ou changement d'événement).
+          categoryId: form.categoryId || (editingId ? null : undefined),
           ...(editingId ? { voteCount: form.voteCount } : {}),
         }),
       }

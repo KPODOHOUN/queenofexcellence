@@ -1,20 +1,27 @@
 @import "tailwindcss";
 
+/* ──────────────────────────────────────────────────────────────
+   Queen of Excellence — design « Gala »
+   Onyx profond · or champagne métallique · ivoire
+   ────────────────────────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #141414;
-  --gold: #F4D03F;
-  --gold-light: #F9E79F;
-  --gold-dark: #C9A227;
-  --champagne: #FEFCF5;
-  --champagne-dark: #FBF5E6;
-  --muted: #737373;
-  --border: #F0EBE0;
+  --background: #f9f9f9;
+  --foreground: #1a1c1c;
+  --onyx: #1c1b1b;
+  --gold: #d4af37;
+  --gold-light: #e9c349;
+  --gold-dark: #735c00;
+  --champagne: #f3f3f3;
+  --champagne-dark: #eeeeee;
+  --muted: #5f5e5e;
+  --border: #e2e2e2;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-onyx: var(--onyx);
   --color-gold: var(--gold);
   --color-gold-light: var(--gold-light);
   --color-gold-dark: var(--gold-dark);
@@ -22,8 +29,8 @@
   --color-champagne-dark: var(--champagne-dark);
   --color-muted: var(--muted);
   --color-border: var(--border);
-  --font-serif: var(--font-playfair);
-  --font-sans: var(--font-inter);
+  --font-serif: var(--font-body);
+  --font-sans: var(--font-body);
 }
 
 * {
@@ -38,13 +45,27 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-body), system-ui, sans-serif;
+  letter-spacing: 0.005em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-playfair), Georgia, serif;
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  font-variant-numeric: lining-nums;
+}
+
+.font-serif {
+  font-variant-numeric: lining-nums;
+}
+
+p {
+  text-wrap: pretty;
 }
 
 ::selection {
@@ -52,18 +73,20 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--foreground);
 }
 
+/* ── Animations ───────────────────────────────────────────── */
+
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(24px); }
+  from { opacity: 0; transform: translateY(28px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fade-in-blur {
-  from { opacity: 0; transform: translateY(20px); filter: blur(8px); }
+  from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
   to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 
@@ -72,14 +95,19 @@ h1, h2, h3, h4, h5, h6 {
   100% { background-position: 200% center; }
 }
 
+@keyframes metal-sheen {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
 @keyframes gold-glow {
   0%, 100% { opacity: 0.45; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.05); }
+  50% { opacity: 0.75; transform: scale(1.06); }
 }
 
 @keyframes ken-burns {
-  from { transform: scale(1); }
-  to { transform: scale(1.08); }
+  from { transform: scale(1.02); }
+  to { transform: scale(1.1); }
 }
 
 @keyframes float {
@@ -88,7 +116,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @keyframes bounce-soft {
-  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
   50% { transform: translateY(6px); opacity: 1; }
 }
 
@@ -103,43 +131,30 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @keyframes sparkle {
-  0%, 100% { opacity: 0.3; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1); }
+  0%, 100% { opacity: 0.25; transform: scale(0.7) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(45deg); }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+@keyframes line-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 
-.animate-fade-in-up {
-  animation: fade-in-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.animate-fade-in-blur {
-  animation: fade-in-blur 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.animate-ken-burns {
-  animation: ken-burns 8s ease-out forwards;
-}
-
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-.animate-bounce-soft {
-  animation: bounce-soft 2s ease-in-out infinite;
-}
-
-.animate-marquee {
-  animation: marquee 30s linear infinite;
-}
+.animate-fade-in { animation: fade-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.animate-fade-in-up { animation: fade-in-up 1s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.animate-fade-in-blur { animation: fade-in-blur 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.animate-ken-burns { animation: ken-burns 9s ease-out forwards; }
+.animate-float { animation: float 5s ease-in-out infinite; }
+.animate-bounce-soft { animation: bounce-soft 2.2s ease-in-out infinite; }
+.animate-marquee { animation: marquee 34s linear infinite; }
+.animate-sparkle { animation: sparkle 3.2s ease-in-out infinite; }
+.animate-line-grow { animation: line-grow 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards; transform-origin: left; }
 
 .stagger-1 { animation-delay: 0.1s; opacity: 0; }
-.stagger-2 { animation-delay: 0.2s; opacity: 0; }
-.stagger-3 { animation-delay: 0.35s; opacity: 0; }
-.stagger-4 { animation-delay: 0.5s; opacity: 0; }
-.stagger-5 { animation-delay: 0.65s; opacity: 0; }
+.stagger-2 { animation-delay: 0.25s; opacity: 0; }
+.stagger-3 { animation-delay: 0.4s; opacity: 0; }
+.stagger-4 { animation-delay: 0.55s; opacity: 0; }
+.stagger-5 { animation-delay: 0.7s; opacity: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -148,133 +163,133 @@ h1, h2, h3, h4, h5, h6 {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-
-  .animate-ken-burns {
-    animation: none;
-    transform: scale(1.02);
-  }
+  .animate-ken-burns { animation: none; transform: scale(1.02); }
 }
+
+@layer components {
+/* ── Composants « Sovereign Elegance » ─────────────────────── */
 
 .gold-gradient {
-  background: linear-gradient(135deg, #F9E79F 0%, #F4D03F 45%, #C9A227 100%);
+  background: var(--gold);
+  color: #101010 !important;
 }
 
-.gold-gradient-text {
-  background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.gold-gradient-text { color: var(--gold-dark); }
+
+.btn-shimmer {}
+
+/* Libellés */
+.label-sm { font-size: 11px; line-height: 16px; letter-spacing: 0.06em; font-weight: 600; text-transform: uppercase; }
+.label-md { font-size: 13px; line-height: 18px; font-weight: 500; }
+.label-lg { font-size: 14px; line-height: 20px; font-weight: 600; }
+
+.eyebrow {
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--gold-dark);
 }
 
+/* Boutons */
+.btn-gold, .btn-dark, .btn-soft, .btn-ghost-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+.btn-gold:active, .btn-dark:active, .btn-soft:active, .btn-ghost-gold:active { transform: scale(0.97); }
+.btn-gold { background: var(--gold); color: #101010; }
+.btn-gold:hover { background: #c39f2e; }
+.btn-dark { background: var(--onyx); color: #fff; }
+.btn-dark:hover { background: #2a2a2a; }
+.btn-soft { background: var(--champagne-dark); color: var(--foreground); }
+.btn-soft:hover { background: #e4e4e4; }
+.btn-ghost-gold { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.btn-ghost-gold:hover { background: rgba(255, 255, 255, 0.2); }
+
+.link-lux {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gold-dark);
+}
+.link-lux:hover { color: var(--foreground); }
+
+/* Surfaces */
 .card-elevated {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(244, 208, 63, 0.04);
-  transition: box-shadow 0.4s ease, transform 0.4s ease, border-color 0.4s ease;
+  background: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(16, 16, 16, 0.06);
+  transition: box-shadow 0.3s ease;
 }
-
 .card-elevated:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 8px 28px rgba(244, 208, 63, 0.1);
-  border-color: rgba(244, 208, 63, 0.35);
-  transform: translateY(-2px);
+  box-shadow: 0 16px 40px -12px rgba(16, 16, 16, 0.12), 0 0 0 1px rgba(212, 175, 55, 0.25);
 }
 
-.btn-shimmer {
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-shimmer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 40%,
-    rgba(255, 255, 255, 0.35) 50%,
-    transparent 60%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 3s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.glass-dark {
-  background: rgba(12, 12, 12, 0.72);
-  backdrop-filter: blur(16px) saturate(1.4);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
-}
-
+.gold-ring {}
+.glass-dark { background: var(--onyx); }
 .glass-light {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px) saturate(1.2);
-  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  background: rgba(249, 249, 249, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
+.bg-onyx-lux { background-color: var(--onyx); }
+.grain {}
+.section-divider { height: 1px; background: var(--border); }
+.section-pattern {}
+.hero-gold-blur { display: none; }
+.frame-offset {}
+.ornament {}
 
-.section-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(244, 208, 63, 0.5), transparent);
-}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
 
-.gold-ring {
-  box-shadow: 0 0 0 1px rgba(244, 208, 63, 0.15), 0 0 40px rgba(244, 208, 63, 0.08);
-}
+/* ── Formulaires ──────────────────────────────────────────── */
 
 .input-field {
-  padding: 0.6875rem 0.875rem;
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  background: white;
+  padding: 0.7rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  background: var(--champagne);
   color: var(--foreground);
-  font-size: 0.875rem;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  font-size: 15px;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
-
-.input-field::placeholder {
-  color: rgba(115, 115, 115, 0.7);
-}
-
-.input-field:hover {
-  border-color: rgba(244, 208, 63, 0.35);
-}
-
+.input-field::placeholder { color: rgba(95, 94, 94, 0.7); }
 .input-field:focus {
   outline: none;
-  border-color: rgba(244, 208, 63, 0.6);
-  box-shadow: 0 0 0 3px rgba(244, 208, 63, 0.15);
+  border-color: var(--gold);
+  background: #fff;
 }
-
-.input-field:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
+.input-field:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .contact-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(244, 208, 63, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(201, 164, 92, 0.16);
   border-radius: 1.25rem;
   transition: border-color 0.35s ease, background 0.35s ease, transform 0.35s ease;
 }
 
 .contact-card:hover {
-  border-color: rgba(244, 208, 63, 0.3);
-  background: rgba(244, 208, 63, 0.06);
+  border-color: rgba(201, 164, 92, 0.4);
+  background: rgba(201, 164, 92, 0.07);
   transform: translateY(-2px);
 }
 
-.section-pattern {
-  background-image: radial-gradient(circle at 1px 1px, rgba(244, 208, 63, 0.06) 1px, transparent 0);
-  background-size: 24px 24px;
 }
 
-.hero-gold-blur {
-  background: radial-gradient(circle, rgba(244, 208, 63, 0.35) 0%, rgba(244, 208, 63, 0.08) 40%, transparent 70%);
-  filter: blur(80px);
-}
-
-/* Hide Next/Turbopack dev overlay / bottom-left 'N' indicator when present */
-/* These selectors cover common variants; using !important to override injected styles in dev. */
+/* Masque l'indicateur de dev Next.js */
 #__next_dev_build_indicator,
 #__next-dev-overlay,
 .next-dev-overlay,
@@ -286,13 +301,4 @@ button[aria-label="Next.js"],
 [aria-label="Open Next.js diagnostics"] {
   display: none !important;
   visibility: hidden !important;
-}
-
-/* Fallback: hide small fixed circular buttons in the bottom-left corner (very specific) */
-body > *[style*="position:fixed"][style*="left"][style*="bottom"] {
-  width: auto !important;
-  height: auto !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
-  display: none !important;
 }

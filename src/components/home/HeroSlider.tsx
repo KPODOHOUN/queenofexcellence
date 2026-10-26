@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface HeroSlide {
   id: string;
-  image: string;
+  image: string | null;
   subtitle?: string;
   title: string;
   description?: string;
@@ -16,216 +16,87 @@ export interface HeroSlide {
   ctaSecondary?: { label: string; href: string };
 }
 
-interface HeroSliderProps {
-  slides: HeroSlide[];
-}
-
 const SLIDE_DURATION = 6000;
-const MAX_SLIDES = 3;
 
-export function HeroSlider({ slides: rawSlides }: HeroSliderProps) {
-  const slides = rawSlides.slice(0, MAX_SLIDES);
+/** Slider d'accueil : image floutée en fond, image nette à droite sur grand écran. */
+export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
   const [current, setCurrent] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [progressKey, setProgressKey] = useState(0);
+  const count = slides.length;
 
-  const goTo = useCallback(
-    (index: number) => {
-      if (isTransitioning || slides.length === 0) return;
-      setIsTransitioning(true);
-      setCurrent((index + slides.length) % slides.length);
-      setProgressKey((k) => k + 1);
-      setTimeout(() => setIsTransitioning(false), 700);
-    },
-    [isTransitioning, slides.length]
-  );
-
-  const next = useCallback(() => goTo(current + 1), [current, goTo]);
-  const prev = useCallback(() => goTo(current - 1), [current, goTo]);
+  const goTo = useCallback((i: number) => setCurrent(((i % count) + count) % count), [count]);
 
   useEffect(() => {
-    if (slides.length <= 1) return;
-    const timer = setInterval(next, SLIDE_DURATION);
-    return () => clearInterval(timer);
-  }, [next, slides.length]);
+    if (count <= 1) return;
+    const timer = window.setInterval(() => setCurrent((c) => (c + 1) % count), SLIDE_DURATION);
+    return () => window.clearInterval(timer);
+  }, [count, current]);
 
-  // Précharge les slides suivants pour éviter l'attente au changement
-  useEffect(() => {
-    const links: HTMLLinkElement[] = [];
-    for (const slide of slides) {
-      if (!slide.image.startsWith("/")) continue;
-      const link = document.createElement("link");
-      link.rel = "preload";
-      link.as = "image";
-      link.href = slide.image;
-      document.head.appendChild(link);
-      links.push(link);
-    }
-    return () => {
-      for (const link of links) link.remove();
-    };
-  }, [slides]);
-
-  if (slides.length === 0) return null;
-
+  if (count === 0) return null;
   const slide = slides[current];
 
-  const scrollToContent = () => {
-    window.scrollTo({ top: window.innerHeight * 0.85, behavior: "smooth" });
-  };
-
   return (
-    <section className="relative h-[82svh] min-h-[480px] max-h-[720px] overflow-hidden bg-[#0a0a0a]">
-      {/* Background slides */}
+    <section className="relative overflow-hidden bg-onyx text-white">
+      {/* Fonds flous */}
       {slides.map((s, i) => (
         <div
           key={s.id}
-          className={cn(
-            "absolute inset-0 overflow-hidden transition-opacity duration-1000 ease-in-out",
-            i === current ? "opacity-100 z-10" : "opacity-0 z-0"
-          )}
+          className={cn("absolute inset-0 transition-opacity duration-1000", i === current ? "opacity-100" : "opacity-0")}
+          aria-hidden
         >
-          <Image
-            src={s.image}
-            alt={s.title}
-            fill
-            priority={i === 0}
-            sizes="100vw"
-            className={cn(
-              "object-cover",
-              i === current && "animate-ken-burns"
-            )}
-          />
-          <div className="absolute inset-0 bg-black/35" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/40" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
-          <div className="absolute inset-0 bg-gradient-to-br from-gold/25 via-transparent to-gold/10 mix-blend-soft-light" />
+          {s.image && (
+            <Image src={s.image} alt="" fill priority={i === 0} sizes="100vw" className="object-cover scale-110 blur-2xl" />
+          )}
+          <div className="absolute inset-0 bg-onyx/70" />
         </div>
       ))}
 
-      {/* Golden blur orbs */}
-      <div className="absolute inset-0 z-[15] pointer-events-none overflow-hidden">
-        <div
-          className="absolute -top-[20%] -right-[10%] w-[55%] h-[55%] rounded-full hero-gold-blur animate-[gold-glow_8s_ease-in-out_infinite]"
-          aria-hidden
-        />
-        <div
-          className="absolute -bottom-[25%] -left-[15%] w-[45%] h-[45%] rounded-full hero-gold-blur opacity-60 animate-[gold-glow_10s_ease-in-out_infinite_2s]"
-          aria-hidden
-        />
-        <div className="absolute top-[15%] left-[10%] w-32 h-32 rounded-full bg-gold/20 blur-3xl animate-float" aria-hidden />
-        <div className="absolute bottom-[20%] right-[15%] w-48 h-48 rounded-full bg-gold/10 blur-[100px]" aria-hidden />
-      </div>
-
-      {/* Decorative line */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent z-20" />
-
-      {/* Content */}
-      <div className="relative z-20 h-full flex items-center justify-center">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-20 pb-24 text-center">
-          <div key={slide.id} className="max-w-3xl mx-auto">
-            {slide.subtitle && (
-              <p className="inline-flex items-center justify-center gap-3 text-[11px] sm:text-xs tracking-[0.35em] uppercase text-gold mb-5 font-medium animate-fade-in-up stagger-1">
-                <span className="w-8 h-px bg-gold/70" />
-                {slide.subtitle}
-                <span className="w-8 h-px bg-gold/70" />
-              </p>
-            )}
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-white leading-[1.08] mb-4 tracking-tight drop-shadow-lg animate-fade-in-blur stagger-2">
-              {slide.title}
-            </h1>
-            {slide.description && (
-              <p className="text-sm sm:text-base text-white/80 leading-relaxed mb-7 max-w-xl mx-auto font-light animate-fade-in-up stagger-3">
-                {slide.description}
-              </p>
-            )}
-            <div className="flex flex-wrap gap-4 justify-center animate-fade-in-up stagger-4">
-              {slide.ctaPrimary && (
-                <Link
-                  href={slide.ctaPrimary.href}
-                  className="btn-shimmer inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-foreground gold-gradient rounded-full hover:opacity-90 transition-all duration-300 shadow-lg shadow-gold/25 hover:shadow-gold/40 hover:scale-[1.03] active:scale-[0.98]"
-                >
-                  {slide.ctaPrimary.label}
-                </Link>
-              )}
-              {slide.ctaSecondary && (
-                <Link
-                  href={slide.ctaSecondary.href}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white border border-gold/40 rounded-full hover:bg-gold/15 backdrop-blur-md transition-all duration-300 hover:border-gold/60 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  {slide.ctaSecondary.label}
-                  <ArrowRight size={16} />
-                </Link>
-              )}
-            </div>
+      <div className="relative max-w-7xl mx-auto px-5 lg:px-8 py-12 lg:py-20 grid gap-8 lg:grid-cols-2 lg:items-center lg:min-h-[460px]">
+        <div key={slide.id} className="flex flex-col items-start gap-4 animate-fade-in">
+          {slide.subtitle && <span className="eyebrow !text-gold">{slide.subtitle}</span>}
+          <h1 className="text-[32px] leading-tight lg:text-5xl font-bold">
+            {slide.title}
+          </h1>
+          {slide.description && <p className="text-[15px] leading-6 text-white/80 max-w-lg">{slide.description}</p>}
+          <div className="flex flex-wrap gap-2 mt-2">
+            <Link href={slide.ctaPrimary?.href || "/vote"} className="btn-gold no-underline">
+              {slide.ctaPrimary?.label || "Voter"}
+            </Link>
+            <Link href={slide.ctaSecondary?.href || "/candidats"} className="btn-ghost-gold no-underline">
+              {slide.ctaSecondary?.label || "Les candidates"}
+            </Link>
           </div>
         </div>
+
+        {slide.image && (
+          <div key={`img-${slide.id}`} className="hidden lg:block relative h-[380px] rounded-lg overflow-hidden shadow-2xl animate-fade-in">
+            <Image src={slide.image} alt={slide.title} fill sizes="50vw" className="object-cover object-top" />
+          </div>
+        )}
       </div>
 
-      {/* Navigation arrows */}
-      {slides.length > 1 && (
-        <>
-          <button
-            onClick={prev}
-            aria-label="Slide précédent"
-            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full border border-gold/30 bg-gold/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-gold/25 hover:border-gold/50 hover:scale-110 transition-all duration-300 active:scale-95"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <button
-            onClick={next}
-            aria-label="Slide suivant"
-            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full border border-gold/30 bg-gold/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-gold/25 hover:border-gold/50 hover:scale-110 transition-all duration-300 active:scale-95"
-          >
-            <ChevronRight size={20} />
-          </button>
-        </>
-      )}
-
-      {/* Dots + progress */}
-      {slides.length > 1 && (
-        <div className="absolute bottom-8 left-0 right-0 z-30">
-          <div className="flex flex-col items-center gap-3 px-4">
-            <div className="flex items-center gap-2">
-              {slides.map((s, i) => (
-                <button
-                  key={s.id}
-                  onClick={() => goTo(i)}
-                  aria-label={`Aller au slide ${i + 1}`}
-                  className={cn(
-                    "relative h-1 rounded-full overflow-hidden transition-all duration-500",
-                    i === current ? "w-10 bg-white/20" : "w-4 bg-white/30 hover:bg-gold/50"
-                  )}
-                >
-                  {i === current && (
-                    <span
-                      key={progressKey}
-                      className="absolute inset-0 origin-left bg-gold rounded-full shadow-[0_0_12px_rgba(244,208,63,0.6)]"
-                      style={{ animation: `slide-progress ${SLIDE_DURATION}ms linear forwards` }}
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
-            <span className="text-gold/70 text-xs tracking-widest font-light">
-              {String(current + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
-            </span>
+      {count > 1 && (
+        <div className="relative max-w-7xl mx-auto px-5 lg:px-8 pb-6 flex items-center justify-between">
+          <div className="flex gap-2">
+            {slides.map((s, i) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => goTo(i)}
+                aria-label={`Slide ${i + 1}`}
+                className={cn("h-1 rounded-full transition-all", i === current ? "w-8 bg-gold" : "w-4 bg-white/40")}
+              />
+            ))}
+          </div>
+          <div className="flex gap-1">
+            <button type="button" onClick={() => goTo(current - 1)} aria-label="Précédent" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20">
+              <ChevronLeft size={18} />
+            </button>
+            <button type="button" onClick={() => goTo(current + 1)} aria-label="Suivant" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20">
+              <ChevronRight size={18} />
+            </button>
           </div>
         </div>
       )}
-
-      {/* Scroll indicator */}
-      <button
-        onClick={scrollToContent}
-        aria-label="Défiler vers le contenu"
-        className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1 text-white/50 hover:text-gold transition-colors duration-300 animate-bounce-soft"
-      >
-        <span className="text-[10px] tracking-[0.25em] uppercase">Découvrir</span>
-        <ChevronDown size={20} />
-      </button>
-
-      {/* Bottom fade to content */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 z-[16] bg-gradient-to-t from-[#0c0c0c] via-black/40 to-transparent pointer-events-none" />
     </section>
   );
 }

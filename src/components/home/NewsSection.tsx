@@ -21,9 +21,9 @@ interface NewsSectionProps {
 
 export function NewsSection({ items }: NewsSectionProps) {
   return (
-    <section id="actualites" className="py-14 lg:py-20 bg-champagne/40">
+    <section id="actualites" className="py-20 lg:py-28 bg-champagne">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-14">
           <SectionHeading
             eyebrow="Actualités"
             title="Dernières nouvelles"
@@ -31,12 +31,9 @@ export function NewsSection({ items }: NewsSectionProps) {
             className="mb-0 text-left sm:text-left mx-0 max-w-xl"
             align="left"
           />
-          <Link
-            href="/actualites"
-            className="inline-flex items-center gap-2 text-sm font-medium text-gold hover:text-gold-dark transition-colors group shrink-0"
-          >
-            Voir plus
-            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          <Link href="/actualites" className="link-lux shrink-0 no-underline group">
+            Toutes les actualités
+            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
 
@@ -46,11 +43,11 @@ export function NewsSection({ items }: NewsSectionProps) {
             description="Les contenus sont ajoutés depuis le tableau de bord admin."
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {items.map((item, i) => (
               <Reveal key={item.id} delay={i * 80}>
-                <article className="group card-elevated gold-ring overflow-hidden h-full flex flex-col">
-                  <div className="relative aspect-[16/10] bg-champagne-dark overflow-hidden">
+                <article className="group card-elevated overflow-hidden h-full flex flex-col">
+                  <div className="relative aspect-[16/11] bg-champagne-dark overflow-hidden">
                     {item.image ? (
                       <Image
                         src={item.image}
@@ -65,8 +62,8 @@ export function NewsSection({ items }: NewsSectionProps) {
                       </div>
                     )}
                   </div>
-                  <div className="p-5 flex flex-col flex-1">
-                    <h3 className="font-serif text-lg text-foreground mb-2 group-hover:text-gold transition-colors line-clamp-2">
+                  <div className="p-6 flex flex-col flex-1">
+                    <h3 className="font-serif text-xl leading-snug text-foreground mb-3 group-hover:text-gold-dark transition-colors line-clamp-2">
                       {item.title}
                     </h3>
                     <p className="text-sm text-muted leading-relaxed line-clamp-3 flex-1">{item.description}</p>

@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import { Reveal } from "@/components/ui/Reveal";
 
 interface PageHeroProps {
   eyebrow?: string;
@@ -9,29 +8,18 @@ interface PageHeroProps {
   children?: React.ReactNode;
 }
 
+/** En-tête éditorial des pages intérieures. */
 export function PageHero({ eyebrow, title, description, className, children }: PageHeroProps) {
   return (
-    <section className={cn("relative py-14 lg:py-20 bg-champagne overflow-hidden", className)}>
-      <div className="absolute inset-0 section-pattern opacity-60" />
-      <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-gold/10 blur-[80px] pointer-events-none animate-float" />
-      <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-gold/5 blur-[60px] pointer-events-none" />
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
-      <Reveal blur className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {eyebrow && (
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <span className="h-px w-8 bg-gold/60" />
-            <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium">{eyebrow}</p>
-            <span className="h-px w-8 bg-gold/60" />
-          </div>
-        )}
-        <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-foreground leading-tight tracking-tight">
+    <section className={cn("bg-background", className)}>
+      <div className="max-w-7xl mx-auto px-5 lg:px-8 pt-6 pb-6 lg:pt-14 lg:pb-10">
+        {eyebrow && <p className="eyebrow mb-2">{eyebrow}</p>}
+        <h1 className="text-[28px] lg:text-4xl leading-tight text-foreground max-w-3xl">
           {title}
         </h1>
-        {description && (
-          <p className="mt-4 text-muted text-sm leading-relaxed max-w-xl mx-auto">{description}</p>
-        )}
-        {children && <div className="mt-8">{children}</div>}
-      </Reveal>
+        {description && <p className="mt-2 text-[15px] leading-6 text-muted max-w-2xl">{description}</p>}
+        {children && <div className="mt-6">{children}</div>}
+      </div>
     </section>
   );
 }

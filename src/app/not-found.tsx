@@ -5,7 +5,7 @@ import { ArrowRight, Home, Search } from "lucide-react";
 export default function NotFound() {
   return (
     <PublicLayout>
-      <section className="relative min-h-[75svh] flex items-center overflow-hidden bg-[#0c0c0c]">
+      <section className="relative min-h-[75svh] flex items-center overflow-hidden bg-onyx">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-gold/5 blur-[140px] pointer-events-none" />
 

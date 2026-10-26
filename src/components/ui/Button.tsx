@@ -12,15 +12,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center font-medium rounded-full transition-all duration-300 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:active:scale-100",
+          "inline-flex items-center justify-center font-semibold uppercase tracking-[0.1em] rounded-[2px] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:active:scale-100",
           {
-            "text-white gold-gradient hover:opacity-90 shadow-sm hover:shadow-lg hover:shadow-gold/25 hover:-translate-y-0.5": variant === "primary",
-            "bg-champagne text-foreground hover:bg-gold-light/30 hover:-translate-y-0.5": variant === "secondary",
-            "border border-gold text-gold hover:bg-gold/5 hover:-translate-y-0.5": variant === "outline",
-            "text-foreground/70 hover:text-gold hover:bg-champagne": variant === "ghost",
-            "px-4 py-2 text-sm": size === "sm",
-            "px-6 py-2.5 text-sm": size === "md",
-            "px-8 py-3 text-base": size === "lg",
+            "bg-onyx !text-white hover:bg-gold hover:!text-onyx": variant === "primary",
+            "bg-champagne text-foreground border border-border hover:border-gold/50": variant === "secondary",
+            "border border-gold/60 text-gold-dark hover:bg-gold/10 hover:border-gold": variant === "outline",
+            "text-foreground/70 hover:text-gold-dark hover:bg-champagne": variant === "ghost",
+            "px-4 py-2 text-xs": size === "sm",
+            "px-6 py-3 text-xs": size === "md",
+            "px-8 py-4 text-[0.8rem]": size === "lg",
           },
           className
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Plus, Pencil, Trash2, Ban, CheckCircle, ExternalLink, X } from "lucide-react";
 import { getEventStatusLabel } from "@/lib/utils";
@@ -22,8 +22,9 @@ interface Event {
   blocked: boolean;
   image: string | null;
   banner: string | null;
+  attendanceFrame?: string | null;
   categories?: { name: string }[];
-  _count?: { candidates: number; votes: number };
+  _count?: { candidates: number; votes: number; attendance?: number };
 }
 
 const emptyForm = {
@@ -38,6 +39,7 @@ const emptyForm = {
   published: false,
   image: "",
   banner: "",
+  attendanceFrame: "",
   categoriesText: "",
 };
 
@@ -50,6 +52,8 @@ const statusOptions = [
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
+  /** Cadre déjà enregistré sur l'événement en cours d'édition (pour pouvoir le retirer). */
+  const editingFrameRef = useRef("");
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -72,6 +76,7 @@ export default function AdminEventsPage() {
     const res = await fetch(`/api/admin/events/${event.id}`);
     const detail = res.ok ? await res.json() : event;
     setEditingId(event.id);
+    editingFrameRef.current = detail.attendanceFrame || "";
     setForm({
       name: detail.name,
       description: detail.description,
@@ -84,12 +89,14 @@ export default function AdminEventsPage() {
       published: detail.published,
       image: detail.image || "",
       banner: detail.banner || "",
+      attendanceFrame: detail.attendanceFrame || "",
       categoriesText: (detail.categories ?? []).map((c: { name: string }) => c.name).join("\n"),
     });
     setShowForm(true);
   }
 
   function handleCancelForm() {
+    editingFrameRef.current = "";
     setShowForm(false);
     setEditingId(null);
     setForm(emptyForm);
@@ -116,6 +123,8 @@ export default function AdminEventsPage() {
       published: form.published,
       image: form.image,
       banner: form.banner,
+      // Envoyé seulement s'il est renseigné (ou vidé) : la colonne vient de la migration add-event-attendance.sql.
+      ...(form.attendanceFrame || editingFrameRef.current ? { attendanceFrame: form.attendanceFrame || null } : {}),
       categories,
     };
 
@@ -258,6 +267,12 @@ export default function AdminEventsPage() {
               onChange={(banner) => setForm({ ...form, banner })}
             />
           </div>
+          <ImageUploadField
+            label="Cadre « J'y serai »"
+            hint="PNG du graphiste, carré (ex. 1080 × 1080), avec une zone transparente pour la photo du visiteur."
+            value={form.attendanceFrame}
+            onChange={(attendanceFrame) => setForm({ ...form, attendanceFrame })}
+          />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} />
             Publier immédiatement
@@ -276,6 +291,7 @@ export default function AdminEventsPage() {
               <th className="text-left p-4 font-medium">Date</th>
               <th className="text-left p-4 font-medium">Statut</th>
               <th className="text-left p-4 font-medium">Candidates</th>
+              <th className="text-left p-4 font-medium">J&apos;y serai</th>
               <th className="text-left p-4 font-medium">Publié</th>
               <th className="text-left p-4 font-medium">Votes / Billets</th>
               <th className="text-right p-4 font-medium">Actions</th>
@@ -295,6 +311,7 @@ export default function AdminEventsPage() {
                 <td className="p-4 text-muted">{new Date(event.date).toLocaleDateString("fr-FR")}</td>
                 <td className="p-4">{getEventStatusLabel(event.status)}</td>
                 <td className="p-4">{event._count?.candidates ?? 0}</td>
+                <td className="p-4">{event._count?.attendance ?? 0}</td>
                 <td className="p-4">
                   <button onClick={() => toggleField(event, "published")} className={`px-2 py-1 rounded text-xs transition-colors ${event.published ? "bg-green-100 text-green-700" : "bg-champagne text-muted"}`}>
                     {event.published ? "Oui" : "Non"}

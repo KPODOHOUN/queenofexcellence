@@ -1,7 +1,7 @@
-import { cn, getEventStatusLabel, formatDate } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
-import { Calendar, MapPin, Users, ArrowUpRight } from "lucide-react";
+import { AttendButton } from "@/components/events/AttendButton";
+import { cn, formatCurrency, formatDate, getEventStatusLabel } from "@/lib/utils";
 
 interface EventCardProps {
   event: {
@@ -12,66 +12,90 @@ interface EventCardProps {
     shortDesc: string | null;
     description: string;
     date: Date | string;
+    time?: string | null;
     location: string;
     status: string;
+    minTicketPrice?: number | null;
+    ticketCapacity?: number;
+    ticketsSold?: number;
+    attendanceFrame?: string | null;
     _count?: { candidates: number };
+    candidateCount?: number;
   };
   className?: string;
 }
 
 export function EventCard({ event, className }: EventCardProps) {
-  const candidateCount = event._count?.candidates ?? 0;
+  const isPast = event.status === "COMPLETED";
+  const capacity = event.ticketCapacity ?? 0;
+  const sold = event.ticketsSold ?? 0;
+  const fill = capacity > 0 ? Math.min(100, Math.round((sold / capacity) * 100)) : null;
+  const hasTickets = !isPast && event.minTicketPrice != null;
 
   return (
-    <Link href={`/events/${event.slug}`} className={cn("group card-elevated gold-ring overflow-hidden block", className)}>
-      <div className="relative aspect-[16/10] overflow-hidden bg-champagne-dark">
-        {event.image ? (
+    <article className={cn("card-elevated overflow-hidden flex flex-col", className)}>
+      <Link href={`/events/${event.slug}`} className="relative block w-full aspect-[16/9] bg-onyx overflow-hidden no-underline">
+        {event.image && (
           <Image
             src={event.image}
             alt={event.name}
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out"
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className={cn("object-cover", isPast && "grayscale-[30%]")}
           />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-7xl font-serif text-gold/15 group-hover:scale-110 transition-transform duration-500">Q</span>
+        )}
+        <span className="absolute top-3 left-3 bg-white text-foreground text-xs font-semibold px-2 py-1 rounded">
+          {isPast ? "Terminé" : getEventStatusLabel(event.status)}
+        </span>
+      </Link>
+
+      <div className="p-4 flex flex-col gap-2 flex-1">
+        <p className="text-sm text-muted">
+          {formatDate(event.date)}
+          {event.time ? ` • ${event.time}` : ""} • {event.location}
+        </p>
+        <h2 className="text-lg font-semibold text-foreground leading-snug">{event.name}</h2>
+        <p className="text-sm text-muted line-clamp-2">{event.shortDesc || event.description}</p>
+
+        {hasTickets && fill !== null && (
+          <div className="mt-1">
+            <div className="flex justify-between text-xs text-muted mb-1">
+              <span>Dès {formatCurrency(event.minTicketPrice!)}</span>
+              <span>{fill}% réservé</span>
+            </div>
+            <div className="h-1.5 bg-champagne-dark rounded-full overflow-hidden">
+              <div className="h-full bg-gold rounded-full" style={{ width: `${fill}%` }} />
+            </div>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-70 group-hover:opacity-90 transition-opacity duration-500" />
-        <span className="absolute top-4 left-4 px-3 py-1.5 text-[11px] font-medium tracking-wide uppercase bg-white/95 backdrop-blur-sm rounded-full text-foreground shadow-sm transition-transform duration-300 group-hover:scale-105">
-          {getEventStatusLabel(event.status)}
-        </span>
-      </div>
 
-      <div className="p-5 lg:p-6">
-        <h3 className="font-serif text-lg lg:text-xl text-foreground mb-2 group-hover:text-gold transition-colors duration-300 leading-snug">
-          {event.name}
-        </h3>
-        <p className="text-sm text-muted line-clamp-2 mb-4 leading-relaxed">
-          {event.shortDesc || event.description}
-        </p>
+        {!isPast && (
+          <AttendButton
+            eventId={event.id}
+            eventName={event.name}
+            eventSlug={event.slug}
+            frameUrl={event.attendanceFrame}
+            className="mt-2 pt-3 border-t border-border"
+          />
+        )}
 
-        <div className="flex flex-col gap-2 text-xs text-muted mb-4 pb-4 border-b border-border/80">
-          <span className="flex items-center gap-2.5">
-            <Calendar size={14} className="text-gold shrink-0" />
-            {formatDate(event.date)}
-          </span>
-          <span className="flex items-center gap-2.5">
-            <MapPin size={14} className="text-gold shrink-0" />
-            <span className="line-clamp-1">{event.location}</span>
-          </span>
-          <span className="flex items-center gap-2.5">
-            <Users size={14} className="text-gold shrink-0" />
-            {candidateCount} candidate{candidateCount !== 1 ? "s" : ""}
-          </span>
+        <div className="mt-auto pt-3 flex gap-2">
+          {hasTickets ? (
+            <Link href={`/billetterie?event=${event.slug}`} className="btn-gold flex-1 no-underline">
+              Réserver
+            </Link>
+          ) : (
+            <Link href={`/events/${event.slug}`} className="btn-soft flex-1 no-underline">
+              Voir l&apos;événement
+            </Link>
+          )}
+          {!isPast && (
+            <Link href={`/candidats?event=${event.slug}`} className="btn-soft flex-1 no-underline">
+              Candidates
+            </Link>
+          )}
         </div>
-
-        <span className="inline-flex items-center gap-2 text-sm font-medium text-gold group-hover:text-gold-dark transition-colors">
-          Voir l&apos;événement
-          <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-        </span>
       </div>
-    </Link>
+    </article>
   );
 }

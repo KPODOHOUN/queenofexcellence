@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ShareProfileButton } from "@/components/candidates/ShareProfileButton";
+import { VoteButton } from "@/components/payments/VoteButton";
 
 async function findCandidateBySlugs(
   eventSlug: string,
@@ -81,6 +82,7 @@ export default async function CandidateProfilePage({
   if (!candidate) notFound();
 
   const c = candidate as unknown as {
+    id: string;
     slug: string;
     name: string;
     number: number;
@@ -91,7 +93,7 @@ export default async function CandidateProfilePage({
     categoryId?: string | null;
     bio?: string | null;
     presentation?: string | null;
-    event: { slug: string; name: string; votePrice: number };
+    event: { id: string; slug: string; name: string; votePrice: number };
     gallery: { id: string; imageUrl: string; title?: string | null }[];
   };
 
@@ -159,12 +161,12 @@ export default async function CandidateProfilePage({
               )}
 
               <div className="flex flex-wrap gap-4">
-                <Link
-                  href={`/vote?event=${c.event.slug}&candidate=${c.slug}${c.categoryId ? `&category=${c.categoryId}` : ""}`}
-                  className="inline-flex items-center px-8 py-3.5 text-sm font-medium text-white gold-gradient rounded-full hover:opacity-90 shadow-lg shadow-gold/20 hover:shadow-gold/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
-                >
-                  Voter maintenant — {formatCurrency(c.event.votePrice)}/vote
-                </Link>
+                <VoteButton
+                  className="btn-gold !min-h-12 !px-6"
+                  label={`Voter — ${formatCurrency(c.event.votePrice)} / vote`}
+                  candidate={{ id: c.id, name: c.name, number: c.number, photo: c.photo }}
+                  event={{ id: c.event.id, name: c.event.name, votePrice: c.event.votePrice }}
+                />
                 <ShareProfileButton
                   path={`/candidats/${c.event.slug}/${c.slug}`}
                 />

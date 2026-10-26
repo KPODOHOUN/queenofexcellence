@@ -50,7 +50,7 @@ export default async function TicketConfirmationPage({
         <div className="max-w-lg mx-auto px-4 text-center animate-fade-in">
           {isSuccess ? (
             <>
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-50 flex items-center justify-center animate-[gold-glow_2.5s_ease-in-out_infinite]">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-50 flex items-center justify-center">
                 <span className="text-3xl text-green-600">✓</span>
               </div>
               <h1 className="font-serif text-3xl text-foreground mb-4">

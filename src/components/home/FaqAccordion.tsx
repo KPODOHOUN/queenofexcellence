@@ -14,27 +14,27 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
   const [openId, setOpenId] = useState<string | null>(items[0]?.id ?? null);
 
   return (
-    <div className="space-y-3">
+    <div className="border-t border-border">
       {items.map((faq) => {
         const open = openId === faq.id;
         return (
           <div
             key={faq.id}
-            className="card-elevated overflow-hidden border border-border/80 transition-shadow duration-300 hover:shadow-md hover:shadow-gold/5"
+            className="border-b border-border"
           >
             <button
               type="button"
               onClick={() => setOpenId(open ? null : faq.id)}
-              className="w-full px-5 py-4 flex items-center justify-between gap-3 text-left"
+              className="group w-full py-5 flex items-center justify-between gap-6 text-left"
               aria-expanded={open}
             >
-              <span className="font-medium text-foreground text-sm leading-snug">
+              <span className="font-medium text-[1rem] leading-snug text-foreground">
                 {faq.question}
               </span>
               <span
                 className={cn(
-                  "shrink-0 w-8 h-8 rounded-full border border-border flex items-center justify-center text-gold transition-transform duration-300",
-                  open && "rotate-180 bg-gold/10 border-gold/30"
+                  "shrink-0 text-muted transition-transform duration-300",
+                  open && "rotate-180"
                 )}
               >
                 <ChevronDown size={16} />
@@ -47,7 +47,7 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
               )}
             >
               <div className="overflow-hidden">
-                <div className="px-6 pb-5 text-sm text-muted leading-relaxed border-t border-border/60 pt-4">
+                <div className="pb-6 pr-10 text-[0.95rem] text-muted leading-[1.75]">
                   {faq.answer}
                 </div>
               </div>

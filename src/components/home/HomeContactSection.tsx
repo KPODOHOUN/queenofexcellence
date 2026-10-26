@@ -19,8 +19,8 @@ interface HomeContactSectionProps {
 
 export function HomeContactSection({ contact, socialLinks }: HomeContactSectionProps) {
   return (
-    <section id="contact" className="relative py-20 lg:py-28 bg-[#080808] overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_80%_at_50%_100%,rgba(244,208,63,0.12),transparent)]" />
+    <section id="contact" className="relative py-20 lg:py-28 bg-onyx overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_80%_at_50%_100%,rgba(201,164,92,0.12),transparent)]" />
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">

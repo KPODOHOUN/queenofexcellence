@@ -21,7 +21,10 @@ type Category = {
   candidates: Candidate[];
 };
 
+const UNCATEGORIZED = "uncategorized";
+
 interface EventCategoryPanelProps {
+  eventId?: string;
   categories: Category[];
   uncategorizedCandidates?: Candidate[];
   eventSlug: string;
@@ -61,16 +64,27 @@ function RankingRow({ candidate, rank }: { candidate: Candidate; rank: number })
 }
 
 export function EventCategoryPanel({
+  eventId,
   categories,
   uncategorizedCandidates = [],
   eventSlug,
   votePrice,
   votingAllowed,
 }: EventCategoryPanelProps) {
+  // On ignore les catégories sans candidate publiée.
+  const filled = categories.filter((c) => c.candidates.length > 0);
+  const hasCategories = filled.length > 0;
   const tabs = [
-    ...categories.map((c) => ({ id: c.id, label: c.name, candidates: c.candidates })),
+    ...filled.map((c) => ({ id: c.id, label: c.name, candidates: c.candidates })),
     ...(uncategorizedCandidates.length > 0
-      ? [{ id: "other", label: "Autres", candidates: uncategorizedCandidates }]
+      ? [
+          {
+            id: UNCATEGORIZED,
+            // Événement sans catégorie : un seul groupe, sans onglet.
+            label: hasCategories ? "Autres" : "Toutes",
+            candidates: uncategorizedCandidates,
+          },
+        ]
       : []),
   ];
 
@@ -110,7 +124,9 @@ export function EventCategoryPanel({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
-          <h3 className="font-serif text-xl mb-4">Classement — {active?.label}</h3>
+          <h3 className="font-serif text-xl mb-4">
+            {tabs.length > 1 ? `Classement — ${active?.label}` : "Classement"}
+          </h3>
           <div className="space-y-3">
             {ranked.map((candidate, index) => (
               <RankingRow key={candidate.id} candidate={candidate} rank={index + 1} />
@@ -121,7 +137,13 @@ export function EventCategoryPanel({
           <h3 className="font-serif text-xl mb-4">Candidates</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {ranked.map((candidate) => (
-              <CandidateCard key={candidate.id} candidate={candidate} />
+              <CandidateCard
+                key={candidate.id}
+                candidate={{
+                  ...candidate,
+                  event: { ...candidate.event, id: eventId, votePrice },
+                }}
+              />
             ))}
           </div>
           {votingAllowed && (
@@ -129,10 +151,14 @@ export function EventCategoryPanel({
               <p className="text-sm text-muted mb-2">Prix du vote</p>
               <p className="font-serif text-2xl text-gold mb-4">{formatCurrency(votePrice)}</p>
               <Link
-                href={`/vote?event=${eventSlug}&category=${active?.id}`}
+                href={
+                  active && active.id !== UNCATEGORIZED
+                    ? `/vote?event=${eventSlug}&category=${active.id}`
+                    : `/vote?event=${eventSlug}`
+                }
                 className="inline-flex px-6 py-3 text-sm font-semibold text-foreground gold-gradient rounded-full hover:opacity-90 transition-opacity"
               >
-                Voter dans cette catégorie
+                {active && active.id !== UNCATEGORIZED ? "Voter dans cette catégorie" : "Voter"}
               </Link>
             </div>
           )}

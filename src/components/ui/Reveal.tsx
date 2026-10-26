@@ -11,21 +11,31 @@ interface RevealProps {
   blur?: boolean;
 }
 
+type RevealState = "static" | "hidden" | "shown";
+
+/**
+ * Apparition au défilement. Le contenu est visible par défaut (rendu serveur,
+ * JS lent ou désactivé) : seuls les blocs encore sous la ligne de flottaison
+ * au montage sont masqués puis animés à leur entrée dans l'écran.
+ */
 export function Reveal({ children, className, delay = 0, as = "div", blur = false }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [state, setState] = useState<RevealState>("static");
 
   useEffect(() => {
     const node = ref.current;
-    if (!node) return;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+    if (node.getBoundingClientRect().top < window.innerHeight * 0.92) return;
+
+    setState("hidden");
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setVisible(true);
+          setState("shown");
           observer.disconnect();
         }
       },
-      { threshold: 0.12, rootMargin: "0px 0px -60px 0px" }
+      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
     );
     observer.observe(node);
     return () => observer.disconnect();
@@ -36,12 +46,11 @@ export function Reveal({ children, className, delay = 0, as = "div", blur = fals
   return (
     <Comp
       ref={ref as never}
-      style={{ transitionDelay: visible ? `${delay}ms` : "0ms" }}
+      style={state === "shown" ? { transitionDelay: `${delay}ms` } : undefined}
       className={cn(
-        "transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform]",
-        visible
-          ? "opacity-100 translate-y-0 blur-0"
-          : cn("opacity-0 translate-y-10", blur && "blur-sm"),
+        state !== "static" &&
+          "transition-all duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform]",
+        state === "hidden" && cn("opacity-0 translate-y-10", blur && "blur-sm"),
         className
       )}
     >

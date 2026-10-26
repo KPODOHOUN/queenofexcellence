@@ -38,7 +38,8 @@ function resolveVoterEmail(voterEmail?: string, voterPhone?: string): string {
   if (email) return email;
   const digits = (voterPhone ?? "").replace(/\D/g, "");
   if (digits.length >= 8) return `vote.${digits}@queenofexcellence.local`;
-  throw new AppError("Téléphone invalide");
+  // Vote rapide sans coordonnées : le numéro est saisi dans la fenêtre KKiaPay.
+  return `vote.${generateReference("ANON").toLowerCase()}@queenofexcellence.local`;
 }
 
 export async function createVotePayment({
@@ -52,11 +53,13 @@ export async function createVotePayment({
   eventId: string;
   candidateId: string;
   voteCount: number;
-  voterName: string;
+  voterName?: string;
   voterEmail?: string;
-  voterPhone: string;
+  voterPhone?: string;
 }) {
   const email = resolveVoterEmail(voterEmail, voterPhone);
+  voterName = voterName?.trim() || "Votant";
+  voterPhone = voterPhone?.trim() || undefined;
   const { event, error } = await getEventForVoting(eventId);
   if (!event) throw new AppError(error);
 

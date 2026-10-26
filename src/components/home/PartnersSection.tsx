@@ -42,11 +42,11 @@ function useVisibleCount() {
 
 function PartnerLogo({ partner }: { partner: Partner }) {
   const content = (
-    <div className="group mx-2 sm:mx-3 flex h-36 sm:h-40 lg:h-44 items-center justify-center rounded-xl border border-gold/10 bg-white p-4 transition-all duration-500 hover:border-gold/35 hover:shadow-lg hover:shadow-gold/15 hover:-translate-y-1 gold-ring">
+    <div className="group mx-2 sm:mx-3 flex h-36 sm:h-40 lg:h-44 items-center justify-center border border-border bg-white p-6 transition-colors duration-300 hover:border-foreground">
       <img
         src={partner.logo}
         alt={partner.name}
-        className="max-h-24 sm:max-h-28 lg:max-h-32 w-auto max-w-full object-contain transition-transform duration-500 group-hover:scale-105"
+        className="max-h-24 sm:max-h-28 lg:max-h-32 w-auto max-w-full object-contain"
         loading="lazy"
       />
     </div>
@@ -92,7 +92,7 @@ export function PartnersSection({ partners }: PartnersSectionProps) {
 
   if (partners.length === 0) {
     return (
-      <section id="partenaires" className="relative py-12 lg:py-16 bg-[whitesmoke] overflow-hidden">
+      <section id="partenaires" className="relative py-20 lg:py-28 bg-background overflow-hidden">
         <div className="absolute inset-0 section-pattern opacity-30 pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeading
@@ -114,7 +114,7 @@ export function PartnersSection({ partners }: PartnersSectionProps) {
   const slidePercent = 100 / visibleCount;
 
   return (
-    <section id="partenaires" className="relative py-12 lg:py-16 bg-[whitesmoke] overflow-hidden">
+    <section id="partenaires" className="relative py-20 lg:py-28 bg-background overflow-hidden">
       <div className="absolute inset-0 section-pattern opacity-30 pointer-events-none" />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
@@ -136,7 +136,7 @@ export function PartnersSection({ partners }: PartnersSectionProps) {
                   type="button"
                   onClick={prev}
                   aria-label="Partenaires précédents"
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-gold/30 bg-white flex items-center justify-center text-gold hover:bg-gold/10 hover:border-gold/50 transition-all duration-300 shadow-sm"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 border border-border bg-white flex items-center justify-center text-foreground hover:border-foreground transition-colors"
                 >
                   <ChevronLeft size={18} />
                 </button>
@@ -144,7 +144,7 @@ export function PartnersSection({ partners }: PartnersSectionProps) {
                   type="button"
                   onClick={next}
                   aria-label="Partenaires suivants"
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-gold/30 bg-white flex items-center justify-center text-gold hover:bg-gold/10 hover:border-gold/50 transition-all duration-300 shadow-sm"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 border border-border bg-white flex items-center justify-center text-foreground hover:border-foreground transition-colors"
                 >
                   <ChevronRight size={18} />
                 </button>
@@ -178,8 +178,8 @@ export function PartnersSection({ partners }: PartnersSectionProps) {
                   onClick={() => goTo(i)}
                   aria-label={`Slide ${i + 1}`}
                   className={cn(
-                    "h-1 rounded-full transition-all duration-500",
-                    i === index ? "w-8 bg-gold" : "w-3 bg-gold/25 hover:bg-gold/50"
+                    "h-[3px] w-8 transition-colors",
+                    i === index ? "bg-foreground" : "bg-border hover:bg-muted"
                   )}
                 />
               ))}
