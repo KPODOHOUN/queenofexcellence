@@ -70,13 +70,7 @@ export function EventCard({ event, className }: EventCardProps) {
         )}
 
         {!isPast && (
-          <AttendButton
-            eventId={event.id}
-            eventName={event.name}
-            eventSlug={event.slug}
-            frameUrl={event.attendanceFrame}
-            className="mt-2 pt-3 border-t border-border"
-          />
+<AttendButton eventId={event.id} eventSlug={event.slug} className="mt-2 pt-3 border-t border-border" />
         )}
 
         <div className="mt-auto pt-3 flex gap-2">

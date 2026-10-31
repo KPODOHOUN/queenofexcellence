@@ -61,3 +61,16 @@ export function getPaymentStatusLabel(status: string): string {
   };
   return labels[status] ?? status;
 }
+
+/**
+ * Chemin d'image utilisable par next/image, ou null. next/image plante la page entière
+ * sur un src vide ou relatif sans « / » : on normalise ce que l'admin a pu saisir.
+ */
+export function safeImageSrc(src: unknown): string | null {
+  if (typeof src !== "string") return null;
+  const value = src.trim();
+  if (!value) return null;
+  if (value.startsWith("/") || /^https?:\/\//i.test(value)) return value;
+  if (value.startsWith("uploads/")) return `/${value}`;
+  return null;
+}

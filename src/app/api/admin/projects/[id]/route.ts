@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteRow, updateRow } from "@/lib/db";
+import { deleteRow, findByField, newId, updateRow } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
@@ -26,7 +26,11 @@ export async function PUT(
     const body = await request.json();
     const data = schema.parse(body);
     const updateData: Record<string, unknown> = { ...data };
-    if (data.title && !data.slug) updateData.slug = slugify(data.title);
+    if (data.title && !data.slug) {
+      const slug = slugify(data.title);
+      const existing = await findByField<{ id: string }>("project", "slug", slug);
+      updateData.slug = existing && existing.id !== id ? `${slug}-${newId().slice(0, 8)}` : slug;
+    }
     const project = await updateRow("project", id, updateData);
     return NextResponse.json(project);
   } catch (err) {

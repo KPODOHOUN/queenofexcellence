@@ -1,6 +1,7 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { getTicketOrderConfirmationByReference } from "@/lib/db/models/payments";
-import { confirmPayment } from "@/lib/payments";
+import { confirmPayment, confirmPaymentByTransaction } from "@/lib/payments";
+import { AutoRefresh } from "@/components/ui/AutoRefresh";
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -13,9 +14,21 @@ export const metadata: Metadata = { title: "Confirmation billet" };
 export default async function TicketConfirmationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ref?: string; status?: string }>;
+  searchParams: Promise<{
+    ref?: string;
+    status?: string;
+    txn?: string;
+    transaction_id?: string;
+    transactionId?: string;
+  }>;
 }) {
-  const { ref, status } = await searchParams;
+  const params = await searchParams;
+  const { status } = params;
+  // KKiaPay (callback) peut ajouter « ?transaction_id=… » à une URL qui a déjà « ?ref=… ».
+  const [rawRef, glued] = (params.ref ?? "").split("?");
+  const ref = rawRef || undefined;
+  const gluedTxn = glued ? new URLSearchParams(glued).get("transaction_id") : null;
+  const txn = params.txn || params.transaction_id || params.transactionId || gluedTxn || undefined;
 
   let order: Awaited<ReturnType<typeof getTicketOrderConfirmationByReference>> = null;
   let verified = false;
@@ -24,7 +37,7 @@ export default async function TicketConfirmationPage({
     order = await getTicketOrderConfirmationByReference(ref);
     const paymentRef = (order?.payment as { reference?: string } | null)?.reference;
     if (paymentRef) {
-      const result = await confirmPayment(paymentRef).catch(() => null);
+      const result = await (txn ? confirmPaymentByTransaction(paymentRef, txn) : confirmPayment(paymentRef)).catch(() => null);
       verified = result?.verified === true || result?.alreadyPaid === true;
       order = await getTicketOrderConfirmationByReference(ref);
     }
@@ -57,7 +70,7 @@ export default async function TicketConfirmationPage({
                 Billet confirmé !
               </h1>
               <p className="text-muted mb-2">
-                Paiement validé par FeexPay — {o?.event?.name}
+                Paiement validé par KKiaPay — {o?.event?.name}
               </p>
               <p className="text-sm text-muted mb-6">Réf: {ref}</p>
 
@@ -100,13 +113,16 @@ export default async function TicketConfirmationPage({
                 Vérification en cours
               </h1>
               <p className="text-muted mb-4">
-                Nous attendons la confirmation de FeexPay. Votre billet sera
+                Nous attendons la confirmation de KKiaPay. Votre billet sera
                 disponible dès validation du paiement.
               </p>
               {ref && !verified && (
-                <p className="text-xs text-muted mb-8">
-                  Référence : {ref} — actualisez cette page dans quelques instants.
-                </p>
+                <>
+                  <p className="text-xs text-muted mb-8">
+                    Référence : {ref} — vérification automatique en cours, ne fermez pas cette page.
+                  </p>
+                  <AutoRefresh intervalMs={5000} maxAttempts={24} />
+                </>
               )}
             </>
           )}

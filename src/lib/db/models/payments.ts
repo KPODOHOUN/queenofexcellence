@@ -153,7 +153,7 @@ export async function finalizePaidPaymentTx(
 ) {
   return withTransaction(async (conn) => {
     const [result] = await conn.execute<import("mysql2/promise").ResultSetHeader>(
-      `UPDATE \`payment\` SET status = 'PAID', paid_at = ? WHERE id = ? AND status = 'PENDING'`,
+      `UPDATE \`payment\` SET status = 'PAID', paid_at = ? WHERE id = ? AND status IN ('PENDING', 'FAILED', 'CANCELLED')`,
       [new Date(), paymentId]
     );
     if (result.affectedRows === 0) {
@@ -337,12 +337,12 @@ export async function findPaymentByTransactionId(transactionId: string) {
   return findByField<Record<string, unknown>>("payment", "fispay_ref", transactionId);
 }
 
-export async function findPendingVotePaymentsForReconcile(limit = 500, since?: Date) {
+/** Paiements (votes et billets) en attente dont la transaction KKiaPay est connue. */
+export async function findPendingPaymentsForReconcile(limit = 500, since?: Date) {
   const rows = await query<RowDataPacket>(
     `SELECT p.id, p.reference, p.fispay_ref, p.amount, p.created_at
      FROM \`payment\` p
-     JOIN \`vote\` v ON v.payment_id = p.id
-     WHERE p.type = 'VOTE' AND p.status = 'PENDING'
+     WHERE p.type IN ('VOTE', 'TICKET') AND p.status = 'PENDING'
        AND p.fispay_ref IS NOT NULL AND p.fispay_ref != ''
        AND p.created_at >= ?
      ORDER BY p.created_at ASC

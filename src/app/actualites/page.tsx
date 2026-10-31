@@ -4,6 +4,7 @@ import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { findMany } from "@/lib/db/crud";
 import { safeQuery } from "@/lib/safe-db";
+import { safeImageSrc } from "@/lib/utils";
 import Image from "next/image";
 import type { Metadata } from "next";
 
@@ -44,12 +45,14 @@ export default async function ActualitesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {items.map((item, i) => (
                 <Reveal key={item.id} delay={(i % 3) * 80} className="group card-elevated overflow-hidden">
-                  {item.image && (
-                    <div className="relative aspect-[16/10] overflow-hidden">
+                  {safeImageSrc(item.image) && (
+                    <div className="relative aspect-[16/10] overflow-hidden bg-champagne-dark">
                       <Image
-                        src={item.image}
+                        src={safeImageSrc(item.image)!}
                         alt={item.title}
                         fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        unoptimized={/^https?:/i.test(item.image!)}
                         className="object-cover group-hover:scale-105 transition-transform duration-700"
                       />
                     </div>

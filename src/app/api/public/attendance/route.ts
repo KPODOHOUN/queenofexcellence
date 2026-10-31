@@ -4,7 +4,6 @@ import {
   addAttendance,
   getAttendance,
   isEventOpenForAttendance,
-  removeAttendance,
 } from "@/lib/db/models/attendance";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
@@ -31,8 +30,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/** POST { eventId, token } : « J'y serai ». DELETE : annuler. */
-async function toggle(request: NextRequest, attend: boolean) {
+/** POST { eventId, token } : « J'y serai ». */
+export async function POST(request: NextRequest) {
   const limit = checkRateLimit(request, "attendance", { max: 20, windowMs: 60_000 });
   if (!limit.allowed) return rateLimitResponse(limit.retryAfterSeconds);
 
@@ -44,18 +43,9 @@ async function toggle(request: NextRequest, attend: boolean) {
     if (!(await isEventOpenForAttendance(eventId))) {
       return NextResponse.json({ error: "Événement indisponible" }, { status: 404 });
     }
-    if (attend) await addAttendance(eventId, token);
-    else await removeAttendance(eventId, token);
+    await addAttendance(eventId, token);
     return NextResponse.json(await getAttendance(eventId, token));
   } catch (error) {
     return unavailable(error);
   }
-}
-
-export async function POST(request: NextRequest) {
-  return toggle(request, true);
-}
-
-export async function DELETE(request: NextRequest) {
-  return toggle(request, false);
 }

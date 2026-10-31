@@ -18,7 +18,7 @@ const csp = [
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   /** Accès au serveur de dev depuis un téléphone du réseau local. */
-  allowedDevOrigins: ["10.50.12.133", "*.local"],
+  allowedDevOrigins: ["10.72.201.31", "10.50.12.133", "*.local"],
   images: {
     loader: "custom",
     loaderFile: "./src/lib/image-loader.ts",

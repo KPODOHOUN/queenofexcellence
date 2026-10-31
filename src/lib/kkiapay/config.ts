@@ -1,3 +1,5 @@
+import { timingSafeEqual } from "crypto";
+
 export function isKkiapayConfigured(): boolean {
   return Boolean(
     process.env.KKIAPAY_PUBLIC_KEY &&
@@ -29,7 +31,8 @@ export function normalizeKkiapayStatus(
   status?: string | boolean
 ): "pending" | "paid" | "failed" | "cancelled" {
   if (status === true || status === "SUCCESS" || status === "success") return "paid";
-  if (status === "FAILED" || status === "failed") return "failed";
+  // Webhook : isPaymentSucces vaut false pour une transaction échouée.
+  if (status === false || status === "FAILED" || status === "failed") return "failed";
   if (status === "CANCELLED" || status === "cancelled") return "cancelled";
   return "pending";
 }
@@ -37,5 +40,7 @@ export function normalizeKkiapayStatus(
 export function verifyKkiapayWebhookSecret(headerSecret: string | null): boolean {
   const expected = process.env.KKIAPAY_WEBHOOK_SECRET || process.env.KKIAPAY_SECRET;
   if (!expected || !headerSecret) return false;
-  return headerSecret === expected;
+  const a = Buffer.from(headerSecret);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
 }

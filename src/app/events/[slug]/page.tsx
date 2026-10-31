@@ -41,7 +41,6 @@ export default async function EventDetailPage({
 
   const e = event as unknown as {
     id: string;
-    attendanceFrame?: string | null;
     name: string;
     banner?: string | null;
     image?: string | null;
@@ -151,13 +150,7 @@ export default async function EventDetailPage({
                   <p className="text-sm text-muted text-center py-3">Votes temporairement indisponibles.</p>
                 )}
                 {e.status !== "COMPLETED" && (
-                  <AttendButton
-                    eventId={e.id}
-                    eventName={e.name}
-                    eventSlug={e.slug}
-                    frameUrl={e.attendanceFrame}
-                    className="mt-6 pt-6 border-t border-border"
-                  />
+<AttendButton eventId={e.id} eventSlug={e.slug} className="mt-6 pt-6 border-t border-border" />
                 )}
               </div>
             </Reveal>

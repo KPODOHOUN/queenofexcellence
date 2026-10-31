@@ -23,6 +23,7 @@ import {
   X,
   GalleryHorizontal,
   HeartHandshake,
+  Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +36,7 @@ const navItems = [
   { href: "/admin/payments", label: "Paiements", icon: CreditCard },
   { href: "/admin/tickets", label: "Billetterie", icon: Ticket },
   { href: "/admin/gallery", label: "Galerie", icon: ImageIcon },
+  { href: "/admin/media", label: "Images", icon: Images },
   { href: "/admin/projects", label: "Actualités", icon: FolderOpen },
   { href: "/admin/impact", label: "Impact", icon: HeartHandshake },
   { href: "/admin/partners", label: "Partenaires", icon: Handshake },

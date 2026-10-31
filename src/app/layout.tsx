@@ -9,6 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXTAUTH_URL || "https://queenofexcellence.com"),
   title: {
     default: "Queen of Excellence — Reine de l'Excellence",
     template: "%s | Queen of Excellence",

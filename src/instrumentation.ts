@@ -2,7 +2,7 @@ const RECONCILE_INTERVAL_MS = 2 * 60 * 1000;
 const RECONCILE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
- * Réconciliation automatique des votes : toutes les 2 min, re-vérifie auprès
+ * Réconciliation automatique des paiements (votes et billets) : toutes les 2 min, re-vérifie auprès
  * de KKiaPay les paiements PENDING dont la transaction est connue. Rattrape
  * les votes dont le callback navigateur ou le webhook n'a pas abouti.
  */
@@ -22,16 +22,16 @@ export async function register() {
     if (running) return;
     running = true;
     try {
-      const { retryPendingVotePayments } = await import("@/lib/payments");
-      const result = await retryPendingVotePayments({
+      const { retryPendingPayments } = await import("@/lib/payments");
+      const result = await retryPendingPayments({
         limit: 100,
         since: new Date(Date.now() - RECONCILE_WINDOW_MS),
       });
       if (result.confirmed > 0) {
-        console.log(`[votes] réconciliation auto : ${result.confirmed} paiement(s) confirmé(s)`);
+        console.log(`[paiements] réconciliation auto : ${result.confirmed} paiement(s) confirmé(s)`);
       }
     } catch (error) {
-      console.error("[votes] réconciliation auto:", error);
+      console.error("[paiements] réconciliation auto:", error);
     } finally {
       running = false;
     }

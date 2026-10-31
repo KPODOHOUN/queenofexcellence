@@ -46,6 +46,10 @@ next-env.d.ts
 
 # Tests
 coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
 
 # Misc
 *.log
@@ -62,3 +66,6 @@ deploy/final-fix.sh
 .env.*
 !.env.example
 !.env.development
+
+# Copie locale des images du site en ligne
+sauvegarde-images-*/

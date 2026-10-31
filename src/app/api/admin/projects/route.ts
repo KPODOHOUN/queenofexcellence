@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRow, listPaged } from "@/lib/db";
+import { createRow, findByField, listPaged, newId } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { slugify } from "@/lib/utils";
 import { getPagination, paginatedResponse } from "@/lib/pagination";
@@ -30,10 +30,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const data = schema.parse(body);
-    const project = await createRow("project", {
-      ...data,
-      slug: data.slug || slugify(data.title),
-    });
+    let slug = data.slug || slugify(data.title);
+    // Deux actualités peuvent porter le même titre : le slug doit rester unique.
+    if (await findByField("project", "slug", slug)) slug = `${slug}-${newId().slice(0, 8)}`;
+    const project = await createRow("project", { ...data, slug });
     return NextResponse.json(project, { status: 201 });
   } catch (err) {
     if (err instanceof z.ZodError) {

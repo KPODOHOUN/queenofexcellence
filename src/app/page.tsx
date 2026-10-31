@@ -3,7 +3,6 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { CandidateCard } from "@/components/candidates/CandidateCard";
 import { HeroSlider, type HeroSlide } from "@/components/home/HeroSlider";
 import { PartnersSlider } from "@/components/home/PartnersSlider";
-import { AttendButton } from "@/components/events/AttendButton";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { isDatabaseConfigured, query } from "@/lib/db/connection";
 import { findMany } from "@/lib/db/crud";
@@ -132,27 +131,6 @@ export default async function HomePage() {
                 </Link>
               );
             })}
-          </div>
-        </section>
-      )}
-
-      {/* J'y serai */}
-      {featured && featured.status !== "COMPLETED" && (
-        <section className="max-w-7xl mx-auto px-5 lg:px-8 mt-4">
-          <div className="bg-white rounded-lg shadow-sm p-4 lg:max-w-xl">
-            <p className="text-base font-semibold text-foreground">{featured.name}</p>
-            <p className="text-sm text-muted">
-              {featured.attendanceFrame
-                ? "Vous venez ? Confirmez et créez votre visuel à partager."
-                : "Vous venez ? Confirmez votre présence."}
-            </p>
-            <AttendButton
-              eventId={featured.id}
-              eventName={featured.name}
-              eventSlug={featured.slug}
-              frameUrl={featured.attendanceFrame}
-              className="mt-3"
-            />
           </div>
         </section>
       )}

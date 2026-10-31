@@ -5,12 +5,35 @@ import Image from "next/image";
 import { Upload, X, Loader2, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const COMPRESS_ABOVE = 1.5 * 1024 * 1024;
+const MAX_DIMENSION = 2000;
+
+/** Réduit les grosses photos (JPG/WebP de téléphone) avant l'envoi. PNG et GIF restent intacts. */
+async function compressPhoto(file: File): Promise<File> {
+  if (file.size <= COMPRESS_ABOVE || !/^image\/(jpeg|webp)$/.test(file.type)) return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const ratio = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * ratio);
+    canvas.height = Math.round(bitmap.height * ratio);
+    canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
+}
+
 interface ImageUploadFieldProps {
   label?: string;
   value: string;
   onChange: (url: string) => void;
   className?: string;
   hint?: string;
+  /** Ne pas recompresser le fichier (cadres PNG : la transparence doit rester intacte). */
+  keepOriginal?: boolean;
 }
 
 export function ImageUploadField({
@@ -19,6 +42,7 @@ export function ImageUploadField({
   onChange,
   className,
   hint,
+  keepOriginal = false,
 }: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -32,7 +56,7 @@ export function ImageUploadField({
     setError("");
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", keepOriginal ? file : await compressPhoto(file));
 
     try {
       const res = await fetch("/api/admin/upload", {

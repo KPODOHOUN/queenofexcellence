@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { KkiapayScript, useKkiapayPayment, type KkiapayPaymentConfig } from "@/components/payments/KkiapayWidget";
 import { FormPageShell } from "@/components/ui/FormPageShell";
 import { FormInput, FormSelect } from "@/components/ui/FormField";
 import { Button } from "@/components/ui/Button";
@@ -26,6 +27,7 @@ interface Ticket {
 }
 
 export default function BilletterieForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const preEvent = searchParams.get("event");
 
@@ -38,6 +40,35 @@ export default function BilletterieForm() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const orderRef = useRef("");
+
+  const confirmPayment = useCallback(
+    async (transactionId: string, reference: string) => {
+      try {
+        await fetch("/api/payments/kkiapay/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reference, transactionId }),
+        });
+      } catch {
+        // La page de confirmation re-vérifie côté serveur.
+      }
+      router.push(
+        `/billetterie/confirmation?ref=${encodeURIComponent(orderRef.current)}&txn=${encodeURIComponent(transactionId)}`
+      );
+    },
+    [router]
+  );
+
+  const { openPayment } = useKkiapayPayment({
+    name: customerName,
+    email: customerEmail,
+    phone: customerPhone || undefined,
+    callbackPath: "/billetterie/confirmation",
+    onSuccess: confirmPayment,
+    onFailed: () => setError("Le paiement a échoué ou a été annulé."),
+  });
 
   useEffect(() => {
     fetch("/api/public/events?votable=true")
@@ -98,9 +129,9 @@ export default function BilletterieForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur");
 
-      if (data.paymentUrl) {
-        window.location.href = data.paymentUrl;
-      }
+      orderRef.current = data.reference;
+      // La référence KKiaPay est celle du paiement ; la confirmation affiche la commande.
+      await openPayment({ ...data, reference: data.paymentReference, callbackRef: data.reference } as KkiapayPaymentConfig);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur");
     } finally {
@@ -109,6 +140,8 @@ export default function BilletterieForm() {
   }
 
   return (
+    <>
+    <KkiapayScript />
     <FormPageShell
       eyebrow="Billetterie"
       title="Réservez votre place"
@@ -245,5 +278,6 @@ export default function BilletterieForm() {
         </Reveal>
       )}
     </FormPageShell>
+    </>
   );
 }

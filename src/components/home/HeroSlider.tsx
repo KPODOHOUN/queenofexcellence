@@ -18,7 +18,7 @@ export interface HeroSlide {
 
 const SLIDE_DURATION = 6000;
 
-/** Slider d'accueil : image floutée en fond, image nette à droite sur grand écran. */
+/** Slider d'accueil : l'image, légèrement floutée mais reconnaissable, sert de fond. */
 export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
   const [current, setCurrent] = useState(0);
   const count = slides.length;
@@ -44,14 +44,14 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
           aria-hidden
         >
           {s.image && (
-            <Image src={s.image} alt="" fill priority={i === 0} sizes="100vw" className="object-cover scale-110 blur-2xl" />
+            <Image src={s.image} alt="" fill priority={i === 0} sizes="100vw" className="object-cover object-top scale-105 blur-[6px]" />
           )}
-          <div className="absolute inset-0 bg-onyx/70" />
+          <div className="absolute inset-0 bg-gradient-to-r from-onyx/75 via-onyx/45 to-onyx/25" />
         </div>
       ))}
 
-      <div className="relative max-w-7xl mx-auto px-5 lg:px-8 py-12 lg:py-20 grid gap-8 lg:grid-cols-2 lg:items-center lg:min-h-[460px]">
-        <div key={slide.id} className="flex flex-col items-start gap-4 animate-fade-in">
+      <div className="relative max-w-7xl mx-auto px-5 lg:px-8 py-16 lg:py-24 flex items-center min-h-[420px] lg:min-h-[520px]">
+        <div key={slide.id} className="max-w-2xl flex flex-col items-start gap-4 animate-fade-in drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
           {slide.subtitle && <span className="eyebrow !text-gold">{slide.subtitle}</span>}
           <h1 className="text-[32px] leading-tight lg:text-5xl font-bold">
             {slide.title}
@@ -67,11 +67,6 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
           </div>
         </div>
 
-        {slide.image && (
-          <div key={`img-${slide.id}`} className="hidden lg:block relative h-[380px] rounded-lg overflow-hidden shadow-2xl animate-fade-in">
-            <Image src={slide.image} alt={slide.title} fill sizes="50vw" className="object-cover object-top" />
-          </div>
-        )}
       </div>
 
       {count > 1 && (

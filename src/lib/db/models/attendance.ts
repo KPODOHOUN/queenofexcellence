@@ -30,7 +30,3 @@ export async function addAttendance(eventId: string, visitorToken: string) {
     [newId(), eventId, visitorToken]
   );
 }
-
-export async function removeAttendance(eventId: string, visitorToken: string) {
-  await execute("DELETE FROM `event_attendance` WHERE event_id = ? AND visitor_token = ?", [eventId, visitorToken]);
-}

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { ImageUploadField } from "@/components/admin/ImageUploadField";
 import { Pagination } from "@/components/admin/Pagination";
-import { cn } from "@/lib/utils";
+import { cn, safeImageSrc } from "@/lib/utils";
 
 export type CrudField = {
   key: string;
@@ -12,6 +12,25 @@ export type CrudField = {
   type?: "text" | "textarea" | "image" | "number" | "url" | "boolean";
   colSpan?: 1 | 2;
 };
+
+/** Message lisible à partir de la réponse d'erreur de l'API. */
+async function readSaveError(res: Response, fields: CrudField[]): Promise<string> {
+  const data = await res.json().catch(() => null);
+  const issues = data?.error;
+  if (Array.isArray(issues)) {
+    return issues
+      .map((issue: { path?: string[]; message?: string; code?: string; minimum?: number }) => {
+        const key = issue.path?.[0];
+        const label = fields.find((f) => f.key === key)?.label ?? key ?? "Champ";
+        if (issue.code === "too_small" && issue.minimum) {
+          return `${label} : ${issue.minimum} caractères minimum.`;
+        }
+        return `${label} : valeur invalide.`;
+      })
+      .join(" ");
+  }
+  return typeof issues === "string" ? issues : "Enregistrement impossible. Réessayez.";
+}
 
 interface AdminCrudPageProps {
   title: string;
@@ -35,6 +54,8 @@ export function AdminCrudPage({
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
+  const [saveError, setSaveError] = useState("");
+  const imageKey = fields.find((f) => f.type === "image")?.key;
 
   useEffect(() => {
     fetch(`${apiPath}?page=${page}`)
@@ -47,6 +68,7 @@ export function AdminCrudPage({
   }, [apiPath, page]);
 
   function handleEdit(item: Record<string, string>) {
+    setSaveError("");
     setEditingId(item.id);
     const prefilled: Record<string, string> = {};
     for (const field of fields) {
@@ -59,6 +81,7 @@ export function AdminCrudPage({
   }
 
   function handleCancelForm() {
+    setSaveError("");
     setShowForm(false);
     setEditingId(null);
     setForm({});
@@ -77,16 +100,19 @@ export function AdminCrudPage({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (res.ok) {
-      const item = await res.json();
-      if (editingId) {
-        setItems(items.map((i) => (i.id === item.id ? { ...i, ...item } : i)));
-      } else {
-        setItems([item, ...items]);
-        setTotal((t) => t + 1);
-      }
-      handleCancelForm();
+    setSaveError("");
+    if (!res.ok) {
+      setSaveError(await readSaveError(res, fields));
+      return;
     }
+    const item = await res.json();
+    if (editingId) {
+      setItems(items.map((i) => (i.id === item.id ? { ...i, ...item } : i)));
+    } else {
+      setItems([item, ...items]);
+      setTotal((t) => t + 1);
+    }
+    handleCancelForm();
   }
 
   async function handleDelete(id: string) {
@@ -182,6 +208,11 @@ export function AdminCrudPage({
             </button>
           </div>
           {fields.map((field) => renderField(field))}
+          {saveError && (
+            <p role="alert" className="md:col-span-2 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg p-3">
+              {saveError}
+            </p>
+          )}
           <div className="md:col-span-2">
             <button
               type="submit"
@@ -199,7 +230,11 @@ export function AdminCrudPage({
             style={{ animationDelay: `${i * 40}ms` }}
             className="animate-fade-in bg-white p-4 rounded-xl border border-border hover:border-gold/30 flex justify-between items-start gap-4 transition-colors duration-300"
           >
-            <div className="min-w-0">
+            {imageKey && safeImageSrc(item[imageKey]) && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={safeImageSrc(item[imageKey])!} alt="" className="w-16 h-12 rounded-lg object-cover bg-champagne shrink-0" />
+            )}
+            <div className="min-w-0 flex-1">
               <p className="font-medium">
                 {item[itemTitleKey] || item.question || item.name}
               </p>

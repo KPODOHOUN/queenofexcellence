@@ -12,7 +12,9 @@
     "db:seed": "node scripts/seed-mysql.js",
     "deploy:pack": "bash scripts/pack-deploy.sh",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "engines": {
     "node": ">=20.9.0"
@@ -45,6 +47,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
     "tsx": "^4.23.12",

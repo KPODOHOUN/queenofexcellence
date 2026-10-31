@@ -35,21 +35,23 @@ vi.mock("@/lib/db/models/payments", () => {
     },
     finalizePaidPaymentTx: async (id: string) => {
       const p = db.payments.get(id)!;
-      if (p.status === "PENDING") {
+      if (p.status !== "PAID") {
         p.status = "PAID";
         db.finalized.push(id);
       }
       return p;
     },
-    findPendingVotePaymentsForReconcile: async () =>
+    findPendingPaymentsForReconcile: async () =>
       [...db.payments.values()].filter((p) => p.status === "PENDING" && p.fispayRef),
-    markPaymentFailedTx: vi.fn(),
+    markPaymentFailedTx: async (p: { id: string }, status: string) => {
+      db.payments.get(p.id)!.status = status;
+    },
     getVoteReconcileStats: vi.fn(),
     syncAllCandidateVoteCounts: vi.fn(),
   };
 });
 
-import { confirmPaymentByTransaction, processWebhook, retryPendingVotePayments } from "@/lib/payments";
+import { confirmPaymentByTransaction, processWebhook, retryPendingPayments } from "@/lib/payments";
 
 function addPayment(id: string, extra: Record<string, unknown> = {}) {
   db.payments.set(id, {
@@ -81,7 +83,7 @@ describe("confirmation des votes KKiaPay", () => {
     expect(db.payments.get("p1")!.fispayRef).toBe("TXN1");
 
     verify.mockResolvedValueOnce({ status: "paid", amount: 1000 });
-    const retry = await retryPendingVotePayments();
+    const retry = await retryPendingPayments();
     expect(retry.confirmed).toBe(1);
     expect(db.payments.get("p1")!.status).toBe("PAID");
   });
@@ -134,5 +136,48 @@ describe("confirmation des votes KKiaPay", () => {
       "good-secret"
     );
     expect(db.finalized).toEqual(["p1"]);
+  });
+
+  it("webhook signé d'échec (isPaymentSucces: false) : le paiement passe en échec, sans vote", async () => {
+    addPayment("p1");
+    const res = await processWebhook(
+      JSON.stringify({ transactionId: "TXN1", isPaymentSucces: false, partnerId: "VOTE-p1", event: "transaction.failed" }),
+      "good-secret"
+    );
+    expect(res.success).toBe(true);
+    expect(db.payments.get("p1")!.status).toBe("FAILED");
+    expect(db.finalized).toHaveLength(0);
+  });
+
+  it("webhook d'échec NON signé : aucun effet", async () => {
+    addPayment("p1");
+    verify.mockResolvedValue({ status: "failed" });
+    await processWebhook(
+      JSON.stringify({ transactionId: "TXN1", isPaymentSucces: false, partnerId: "VOTE-p1" }),
+      "wrong-secret"
+    );
+    expect(db.payments.get("p1")!.status).toBe("PENDING");
+  });
+
+  it("nouvel essai réussi après un échec : le vote est bien attribué", async () => {
+    addPayment("p1", { status: "FAILED", fispayRef: null });
+    verify.mockResolvedValue({ status: "paid", amount: 1000 });
+    const res = await processWebhook(
+      JSON.stringify({ transactionId: "TXN2", isPaymentSucces: true, partnerId: "VOTE-p1", event: "transaction.success" }),
+      "good-secret"
+    );
+    expect(res.success).toBe(true);
+    expect(db.payments.get("p1")!.status).toBe("PAID");
+    expect(db.payments.get("p1")!.fispayRef).toBe("TXN2");
+    expect(db.finalized).toEqual(["p1"]);
+  });
+
+  it("transaction d'un autre site (référence inconnue) : acquittée sans effet", async () => {
+    const res = await processWebhook(
+      JSON.stringify({ transactionId: "AUTRE", isPaymentSucces: true, partnerId: "INCONNU" }),
+      "good-secret"
+    );
+    expect(res.success).toBe(true);
+    expect(verify).not.toHaveBeenCalled();
   });
 });

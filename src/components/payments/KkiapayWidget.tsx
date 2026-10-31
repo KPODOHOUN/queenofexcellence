@@ -6,7 +6,7 @@ import Script from "next/script";
 declare global {
   interface Window {
     openKkiapayWidget?: (options: Record<string, unknown>) => void;
-    addSuccessListener?: (cb: (response: { transactionId?: string }) => void) => void;
+    addSuccessListener?: (cb: (response: unknown) => void) => void;
     addFailedListener?: (cb: (error: unknown) => void) => void;
   }
 }
@@ -20,6 +20,8 @@ export type KkiapayPaymentConfig = {
   sandbox: boolean;
   configured: boolean;
   sandboxUrl?: string;
+  /** Référence affichée par la page de confirmation, si différente de `reference` (billets). */
+  callbackRef?: string;
 };
 
 function isWidgetAvailable() {
@@ -57,10 +59,6 @@ interface UseKkiapayOptions {
   onFailed?: (error: unknown) => void;
 }
 
-type KkiapayListenerWindow = Window & {
-  addKkiapayListener?: (event: string, cb: (response: unknown) => void) => void;
-};
-
 function extractTransactionId(response: unknown): string | undefined {
   if (!response || typeof response !== "object") return undefined;
   const r = response as Record<string, unknown>;
@@ -87,38 +85,6 @@ export function useKkiapayPayment({
     onFailedRef.current = onFailed;
   }, [onSuccess, onFailed]);
 
-  // Enregistre les listeners UNE seule fois, dès que le script KKiaPay est chargé
-  // (il se charge après le montage : un enregistrement immédiat serait perdu).
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    let cancelled = false;
-
-    const handleSuccess = async (response: unknown) => {
-      const ref = pendingRef.current?.reference;
-      const txn = extractTransactionId(response);
-      if (!ref || !txn || handledTxn.current === txn) return;
-      handledTxn.current = txn;
-      await onSuccessRef.current(txn, ref);
-    };
-    const handleFailed = (error: unknown) => onFailedRef.current?.(error);
-
-    waitForKkiapayWidget(60000).then((ok) => {
-      if (cancelled || !ok) return;
-      const w = window as KkiapayListenerWindow;
-      if (typeof w.addSuccessListener === "function") {
-        w.addSuccessListener(handleSuccess);
-        w.addFailedListener?.(handleFailed);
-      } else if (typeof w.addKkiapayListener === "function") {
-        w.addKkiapayListener("success", handleSuccess);
-        w.addKkiapayListener("failed", handleFailed);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   async function openPayment(config: KkiapayPaymentConfig) {
     if (config.sandboxUrl) {
       window.location.href = config.sandboxUrl;
@@ -137,6 +103,15 @@ export function useKkiapayPayment({
 
     pendingRef.current = config;
     handledTxn.current = null;
+    // k.js ne garde qu'un seul écouteur (le dernier posé) : on le pose ici, juste avant
+    // l'ouverture, pour que ce soit toujours celui du paiement en cours.
+    window.addSuccessListener?.(async (response: unknown) => {
+      const txn = extractTransactionId(response);
+      if (!txn || handledTxn.current === txn) return;
+      handledTxn.current = txn;
+      await onSuccessRef.current(txn, config.reference);
+    });
+    window.addFailedListener?.((error: unknown) => onFailedRef.current?.(error));
     window.openKkiapayWidget({
       amount: String(config.amount),
       key: config.publicKey,
@@ -153,7 +128,7 @@ export function useKkiapayPayment({
       ...(callbackPath
         ? {
             callback: `${window.location.origin}${callbackPath}?ref=${encodeURIComponent(
-              config.reference
+              config.callbackRef ?? config.reference
             )}`,
           }
         : {}),

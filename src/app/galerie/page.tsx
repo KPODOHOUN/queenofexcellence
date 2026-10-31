@@ -5,6 +5,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { query } from "@/lib/db/connection";
 import { camelKeys } from "@/lib/db/helpers";
 import { safeQuery } from "@/lib/safe-db";
+import { safeImageSrc } from "@/lib/utils";
 import Image from "next/image";
 import type { Metadata } from "next";
 
@@ -36,7 +37,9 @@ async function findPublishedGalleryItems() {
 }
 
 export default async function GaleriePage() {
-  const items = await safeQuery("gallery.list", () => findPublishedGalleryItems(), []);
+  const rows = await safeQuery("gallery.list", () => findPublishedGalleryItems(), []);
+  // Une image mal saisie ne doit jamais faire planter toute la page.
+  const items = rows.filter((i) => safeImageSrc((i as Record<string, unknown>).imageUrl));
 
   const categories = [
     ...new Set(
@@ -80,9 +83,11 @@ export default async function GaleriePage() {
                   return (
                   <Reveal key={g.id} delay={(i % 6) * 80} className="group relative aspect-[4/3] rounded-2xl overflow-hidden">
                     <Image
-                      src={g.imageUrl}
+                      src={safeImageSrc(g.imageUrl)!}
                       alt={g.title || "Galerie"}
                       fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      unoptimized={/^https?:/i.test(g.imageUrl)}
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     {(g.title || g.event) && (

@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const schema = z.object({
   title: z.string().optional(),
-  imageUrl: z.string().url(),
+  imageUrl: z.string().min(1),
   videoUrl: z.string().optional(),
   category: z.string().optional(),
   eventId: z.string().optional(),

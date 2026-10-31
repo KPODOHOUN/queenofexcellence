@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Plus, Pencil, Trash2, Ban, CheckCircle, ExternalLink, X } from "lucide-react";
 import { getEventStatusLabel } from "@/lib/utils";
+import { AttendanceFrameField } from "@/components/admin/AttendanceFrameField";
 import { ImageUploadField } from "@/components/admin/ImageUploadField";
 import { Pagination } from "@/components/admin/Pagination";
 
@@ -267,11 +268,9 @@ export default function AdminEventsPage() {
               onChange={(banner) => setForm({ ...form, banner })}
             />
           </div>
-          <ImageUploadField
-            label="Cadre « J'y serai »"
-            hint="PNG du graphiste, carré (ex. 1080 × 1080), avec une zone transparente pour la photo du visiteur."
+          <AttendanceFrameField
             value={form.attendanceFrame}
-            onChange={(attendanceFrame) => setForm({ ...form, attendanceFrame })}
+            onChange={(attendanceFrame) => setForm((f) => ({ ...f, attendanceFrame }))}
           />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} />

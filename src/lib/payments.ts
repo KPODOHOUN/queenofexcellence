@@ -18,7 +18,7 @@ import {
   findPaymentByTransactionId,
   findRecentPendingPayment,
   finalizePaidPaymentTx,
-  findPendingVotePaymentsForReconcile,
+  findPendingPaymentsForReconcile,
   getVoteReconcileStats,
   markPaymentFailedTx,
   syncAllCandidateVoteCounts,
@@ -40,6 +40,11 @@ function resolveVoterEmail(voterEmail?: string, voterPhone?: string): string {
   if (digits.length >= 8) return `vote.${digits}@queenofexcellence.local`;
   // Vote rapide sans coordonnées : le numéro est saisi dans la fenêtre KKiaPay.
   return `vote.${generateReference("ANON").toLowerCase()}@queenofexcellence.local`;
+}
+
+/** Paiement en attente réutilisé en bac à sable local : garde le lien de test. */
+function sandboxUrlFor(meta: { provider?: string }, reference: unknown) {
+  return meta.provider === "sandbox" ? { sandboxUrl: `/api/payments/sandbox?ref=${reference}` } : {};
 }
 
 export async function createVotePayment({
@@ -81,6 +86,7 @@ export async function createVotePayment({
     if (meta.candidateId === candidateId && meta.voteCount === voteCount) {
       return {
         ...getVoteWidgetConfig(String(recentPending.reference), Number(recentPending.amount)),
+        ...sandboxUrlFor(meta, recentPending.reference),
         reference: recentPending.reference,
         amount: recentPending.amount,
         voteId: meta.voteId,
@@ -225,6 +231,7 @@ export async function createTicketPayment({
     if (existingSignature === itemsSignature && meta.orderId) {
       return {
         ...getVoteWidgetConfig(String(recentPending.reference), Number(recentPending.amount)),
+        ...sandboxUrlFor(meta, recentPending.reference),
         reference: meta.orderRef,
         paymentReference: recentPending.reference,
         amount: recentPending.amount,
@@ -263,6 +270,21 @@ export async function createTicketPayment({
   )) as PayRow & { items: unknown[] };
 
   if (!isKkiapayConfigured()) {
+    if (isLocalPaymentSandboxEnabled()) {
+      await updatePayment(payment!.id as string, {
+        metadata: JSON.stringify({ orderRef, items: orderItems, orderId: ticketOrder.id, provider: "sandbox" }),
+      });
+      return {
+        reference: orderRef,
+        paymentReference: reference,
+        amount: totalAmount,
+        publicKey: "",
+        sandbox: true,
+        configured: false,
+        sandboxUrl: `/api/payments/sandbox?ref=${reference}`,
+        orderId: ticketOrder.id,
+      };
+    }
     await updatePayment(payment!.id as string, { status: "FAILED" });
     await updateTicketOrder(ticketOrder.id as string, { status: "FAILED" });
     throw new AppError("Paiement indisponible : KKiaPay non configuré.");
@@ -347,9 +369,6 @@ export async function confirmPaymentByTransaction(
   if (payment.status === "PAID") {
     return { alreadyPaid: true, payment, verified: true };
   }
-  if (payment.status !== "PENDING") {
-    return { alreadyPaid: false, payment, verified: false };
-  }
 
   const reused = await findOtherPaidPaymentByTransaction(transactionId, payment.id as string);
   if (reused) {
@@ -365,7 +384,7 @@ export async function confirmPaymentByTransaction(
   // Mémoriser la transaction AVANT vérification : si KKiaPay répond encore
   // « PENDING » (fréquent en Mobile Money), la réconciliation automatique
   // pourra re-vérifier plus tard au lieu de perdre le vote.
-  if (!payment.fispayRef) {
+  if (payment.status === "PENDING" && !payment.fispayRef) {
     await updatePayment(payment.id as string, { fispayRef: transactionId });
   }
 
@@ -396,7 +415,9 @@ export async function confirmPaymentByTransaction(
     };
   }
 
-  if (payment.fispayRef && payment.fispayRef !== transactionId) {
+  // Paiement confirmé par KKiaPay : y compris après une tentative échouée ou annulée
+  // (le client peut réessayer dans la même fenêtre, avec la même référence).
+  if (payment.fispayRef !== transactionId) {
     await updatePayment(payment.id as string, { fispayRef: transactionId });
   }
 
@@ -472,47 +493,38 @@ export async function processWebhook(
     const byTxn = await findPaymentByTransactionId(transactionId);
     reference = byTxn?.reference as string | undefined;
   }
-  if (!reference) {
-    return { success: false, message: "Référence manquante" };
+
+  // Transaction qui ne vient pas de ce site : on acquitte (2xx) pour stopper les renvois de KKiaPay.
+  const payment = reference ? await findPaymentByReferenceWithRelations(reference) : null;
+  if (!reference || !payment) {
+    return { success: true, message: "Paiement inconnu, ignoré" };
+  }
+  if (payment.status === "PAID") {
+    return { success: true, message: "Déjà traité" };
   }
 
   const signatureValid = verifyKkiapayWebhookSecret(signature || null);
   if (!signatureValid) {
-    console.warn(
-      "Webhook KKiaPay : secret absent/différent — vérification via l'API KKiaPay.",
-      reference
-    );
+    console.warn("Webhook KKiaPay : secret absent/différent — vérification via l'API KKiaPay.", reference);
   }
 
-  const status = normalizeKkiapayStatus(data.isPaymentSucces);
+  const status = normalizeKkiapayStatus(
+    data.isPaymentSucces ?? (data.event === "transaction.success" ? true : data.event === "transaction.failed" ? false : undefined)
+  );
 
-  // Succès (ou webhook non signé) : la décision vient TOUJOURS de l'API KKiaPay,
-  // jamais du seul contenu du webhook.
-  if (status === "paid" || !signatureValid) {
-    const payment = await findPaymentByReferenceWithRelations(reference);
-    if (!payment) {
-      return { success: false, message: "Paiement introuvable" };
-    }
-    if (payment.status === "PAID") {
-      return { success: true, message: "Déjà traité" };
-    }
-    const result = await confirmPaymentByTransaction(reference, transactionId);
-    if (result.verified) {
-      return { success: true, message: "Paiement confirmé par KKiaPay" };
-    }
-    if (status === "paid") {
-      // Transaction mémorisée : la réconciliation automatique réessaiera.
-      return { success: true, message: result.error || "En attente de confirmation KKiaPay" };
-    }
-    return { success: true, message: "Webhook ignoré (non signé, non payé)" };
-  }
-
-  if (status === "failed" || status === "cancelled") {
-    await markPaymentFailed(reference, status === "cancelled" ? "CANCELLED" : "FAILED");
+  // Échec signé : on l'enregistre. Sans signature, un échec annoncé n'a aucun effet.
+  if (status === "failed" && signatureValid) {
+    await markPaymentFailed(reference, "FAILED");
     return { success: true, message: "Statut mis à jour" };
   }
 
-  return { success: true, message: "Événement en attente ignoré" };
+  // Tout le reste : la décision vient TOUJOURS de l'API KKiaPay, jamais du seul contenu du webhook.
+  // La transaction reste mémorisée : la réconciliation automatique réessaiera si nécessaire.
+  const result = await confirmPaymentByTransaction(reference, transactionId);
+  if (result.verified) {
+    return { success: true, message: "Paiement confirmé par KKiaPay" };
+  }
+  return { success: true, message: result.error || "En attente de confirmation KKiaPay" };
 }
 
 export async function adminForceFinalizePayment(reference: string) {
@@ -531,16 +543,16 @@ export async function adminForceFinalizePayment(reference: string) {
 }
 
 /**
- * Re-vérifie auprès de KKiaPay les paiements de vote PENDING dont on connaît
+ * Re-vérifie auprès de KKiaPay les paiements PENDING (votes et billets) dont on connaît
  * la transaction. Appelé automatiquement en tâche de fond (instrumentation.ts)
  * et par le bouton admin « Réconcilier ».
  */
-export async function retryPendingVotePayments(options?: { limit?: number; since?: Date }) {
+export async function retryPendingPayments(options?: { limit?: number; since?: Date }) {
   let retried = 0;
   let confirmed = 0;
   let retryFailed = 0;
 
-  const rows = await findPendingVotePaymentsForReconcile(options?.limit ?? 500, options?.since);
+  const rows = await findPendingPaymentsForReconcile(options?.limit ?? 500, options?.since);
   for (const row of rows) {
     if (!row.fispayRef) continue;
     retried++;
@@ -568,7 +580,7 @@ export async function reconcileVotePayments(options?: {
   let confirmed = 0;
   let retryFailed = 0;
 
-  const retry = await retryPendingVotePayments({ limit });
+  const retry = await retryPendingPayments({ limit });
   retried = retry.retried;
   confirmed = retry.confirmed;
   retryFailed = retry.retryFailed;

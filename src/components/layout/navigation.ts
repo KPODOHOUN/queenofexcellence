@@ -7,6 +7,7 @@ export const drawerNav: NavItem[] = [
   { href: "/candidats", label: "Candidates" },
   { href: "/vote", label: "Voter" },
   { href: "/billetterie", label: "Billetterie" },
+  { href: "/j-y-serai", label: "J'y serai" },
   { href: "/galerie", label: "Galerie" },
   { href: "/actualites", label: "Actualités" },
   { href: "/a-propos", label: "À propos" },
@@ -17,6 +18,7 @@ export const drawerNav: NavItem[] = [
 export const desktopNav: NavItem[] = [
   { href: "/events", label: "Événements" },
   { href: "/candidats", label: "Candidates" },
+  { href: "/j-y-serai", label: "J'y serai" },
   { href: "/galerie", label: "Galerie" },
   { href: "/actualites", label: "Actualités" },
   { href: "/a-propos", label: "À propos" },
